@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0e14" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="MARM" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <title>MARM: Multi-agent Rust in Minecraft</title>
+    <meta name="description" content="MARM: Multi-agent Rust in Minecraft. A Minecraft-style survival world in your browser: mine, craft, smelt, build, and go to the Nether and the End. Singleplayer, or multiplayer with friends." />
+    <link rel="canonical" href="https://marmcraft.github.io/" />
+
+    <!-- How the link looks when shared (Open Graph: iMessage, Discord, Slack, Facebook, LinkedIn…) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="MARM" />
+    <meta property="og:url" content="https://marmcraft.github.io/" />
+    <meta property="og:title" content="MARM: Multi-agent Rust in Minecraft" />
+    <meta property="og:description" content="A Minecraft-style survival world in your browser, singleplayer or with friends." />
+    <!-- X / Twitter -->
+    <meta name="twitter:title" content="MARM: Multi-agent Rust in Minecraft" />
+    <meta name="twitter:description" content="A Minecraft-style survival world in your browser, singleplayer or with friends." />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Pixelify+Sans:wght@400;500;600;700&family=Silkscreen:wght@400;700&family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/platform/style.css" />
+    <link rel="stylesheet" href="/src/platform/menus.css" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="view" class="fading"></canvas>
+      <div id="ui"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

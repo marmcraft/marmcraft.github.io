@@ -1,0 +1,2 @@
+import{t as e}from"./rolldown-runtime-DK3Fl9T5.js";import{$n as t,Ft as n,ft as r,h as i,k as a,l as o,ut as s}from"./three.core-CwuDv3_y.js";var c=e({Box3:()=>o,Color:()=>i,Euler:()=>a,Mat4:()=>r,MathUtils:()=>s,Quat:()=>n,Vec3:()=>t});export{c as t};
+//# sourceMappingURL=math-uEpm9O9Z.js.map

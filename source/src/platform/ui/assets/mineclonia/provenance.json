@@ -1,0 +1,23 @@
+{
+  "source": "https://codeberg.org/mineclonia/mineclonia",
+  "mod": "mods/HUD/mcl_inventory",
+  "sourcePackage": {
+    "id": "luanti:ryvnf/mineclonia",
+    "pin": "38561",
+    "sha256": "abeacf4e202d6e01a63119a36b46751eb6abfd42948a0b06e1ba8f63fb849e59"
+  },
+  "assets": [
+    {
+      "name": "mcl_inventory_hotbar.png",
+      "sha256": "dbe6ea1c35cd6ff2728545b7ffe681fe15f763a5dd916510542e969bab622d37",
+      "modified": false
+    },
+    {
+      "name": "mcl_inventory_hotbar_selected.png",
+      "sha256": "a17e9f61773a2f4bccde2de4c5e5f03beafaa6dc94a4722fa6c5394a03e25471",
+      "modified": false
+    }
+  ],
+  "definition": "init.lua lines 270\u2013274: 9 items; hud_set_hotbar_image(mcl_inventory_hotbar.png); hud_set_hotbar_selected_image(mcl_inventory_hotbar_selected.png)",
+  "license": "Mod README: source code and textures WTFPL, BlockMen 2013\u20132014; retained game LEGAL includes general media notices."
+}

@@ -1,0 +1,177 @@
+/* A world's own title screen (`GameMeta.brand`, after mconline's Grianan screen): the world behind, its name in a
+   cute pixel face in the middle, a byline under it, and Play under them. None of MARM's own is shown: its bar,
+   the game's name and pitch, achievements, the face and name, the rooms, the hints, the shelf of other games. */
+.home-branded .home-top,
+.home-branded .home-kicker,
+.home-branded .home-title,
+.home-branded .home-tagline,
+.home-branded .home-feats,
+.home-branded .home-face-button,
+.home-branded .home-name,
+.home-branded .home-guest,
+.home-branded .home-tip,
+.home-branded .home-rooms,
+.home-branded .home-hints,
+.home-branded .home-report,
+.home-branded .home-shelf {
+  display: none !important;
+}
+
+/* (Over the whole page, in its middle: the header and the shelf that'd share its rows are gone.) */
+.home.home-branded .home-hero {
+  grid-row: 1 / -1;
+  grid-column: 1 / -1;
+  align-self: center;
+  justify-self: center;
+  align-items: center;
+  margin: 0 auto;
+  padding-bottom: 6vh;
+  text-align: center;
+}
+.home-branded .home-status,
+.home-branded .home-actions {
+  justify-content: center;
+}
+/* (Who's on is MARM's; only what went wrong is said here.) */
+.home-branded .home-status:not(.error) {
+  display: none;
+}
+.home.home-branded .home-actions {
+  margin-top: clamp(40px, 8vh, 88px);
+}
+
+/* The world as it is, only a soft vignette for the words to stand on. */
+.home.home-branded > .home-scrim {
+  background:
+    radial-gradient(ellipse 72% 66% at 50% 46%, rgba(7, 10, 16, 0.25) 0%, rgba(7, 10, 16, 0.1) 42%, rgba(4, 6, 10, 0.55) 78%, rgba(2, 3, 6, 0.86) 100%),
+    linear-gradient(0deg, rgba(7, 10, 16, 0.35) 0%, rgba(7, 10, 16, 0) 24%);
+}
+
+/* The name: its short name big, what it stands for under it, the byline small; drifting gently up and down. */
+.home-branding {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(6px, 1.2vh, 12px);
+  padding-inline: 16px;
+  animation: home-drift 7s ease-in-out infinite alternate;
+  font-family: 'Pixelify Sans', var(--pixel), monospace;
+  color: #fff6dd;
+  -webkit-font-smoothing: none;
+}
+.home-brand-mark {
+  margin: 0;
+  font: 700 clamp(72px, 15vw, 184px) / 0.9 'Pixelify Sans', var(--pixel), monospace;
+  letter-spacing: 0.04em;
+  color: #ffe9a8;
+  /* (A chunky block shadow, a step at a time, the way a pixel logo's lifted off the page.) */
+  text-shadow:
+    0.04em 0.04em 0 #c2603a,
+    0.08em 0.08em 0 #6b2f22,
+    0 0 0.5em rgba(0, 0, 0, 0.55);
+}
+.home-brand-name {
+  margin: 0;
+  font: 600 clamp(20px, 3.2vw, 38px) / 1.15 'Pixelify Sans', var(--pixel), monospace;
+  letter-spacing: 0.02em;
+  text-wrap: balance;
+  color: #fff6dd;
+  text-shadow: 3px 3px 0 #2a1712, 0 0 18px rgba(0, 0, 0, 0.7);
+}
+.home-brand-byline {
+  margin: clamp(4px, 1vh, 10px) 0 0;
+  font: 400 clamp(13px, 1.5vw, 17px) / 1.2 'Pixelify Sans', var(--pixel), monospace;
+  letter-spacing: 0.06em;
+  color: #e6dcc4;
+  text-shadow: 2px 2px 0 #1a0f0c, 0 0 10px rgba(0, 0, 0, 0.8);
+}
+.home-brand-link {
+  color: inherit;
+  text-decoration: none;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 2px;
+  pointer-events: auto;
+}
+.home-brand-link:hover,
+.home-brand-link:focus-visible {
+  text-decoration: underline;
+  color: #fff;
+  outline: none;
+}
+@keyframes home-drift {
+  from { transform: translateY(-6px); }
+  to { transform: translateY(6px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-branding { animation: none; }
+}
+
+/* Play (as Grianan has it): no box, a word in pale stone between two rules that fade at their ends, whiter when it's
+   pointed at. While the world loads, the lower rule fills. */
+.home.home-branded .home-play {
+  min-width: 0;
+  min-height: 0;
+  padding: 14px 46px 16px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font: 500 24px/1 'Pixelify Sans', var(--pixel), monospace;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: #efe6cf;
+  text-shadow: 2px 2px 0 #000, 0 0 10px rgba(0, 0, 0, 0.9), 0 0 26px rgba(0, 0, 0, 0.7);
+  transition: color 0.12s, transform 0.12s, letter-spacing 0.2s;
+}
+.home.home-branded .home-play::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent, #efe6cf 25%, #efe6cf 75%, transparent) top / 100% 2px no-repeat,
+    linear-gradient(90deg, transparent, #efe6cf 25%, #efe6cf 75%, transparent) bottom / 100% 2px no-repeat;
+  filter: drop-shadow(0 0 4px #000);
+  opacity: 0.85;
+}
+.home.home-branded .home-play:not(:disabled)::before {
+  display: none;
+}
+.home.home-branded .home-play:not(:disabled):hover,
+.home.home-branded .home-play:not(:disabled):focus-visible {
+  filter: none;
+  transform: none;
+  color: #fff;
+  letter-spacing: 0.48em;
+  text-shadow: 2px 2px 0 #000, 0 0 10px rgba(0, 0, 0, 0.9), 0 0 18px rgba(255, 210, 140, 0.5);
+}
+.home.home-branded .home-play:not(:disabled):active {
+  transform: translateY(1px);
+}
+.home.home-branded .home-play:disabled {
+  font: 400 14px 'Pixelify Sans', var(--pixel), monospace;
+  letter-spacing: 0.2em;
+  color: #c9c1ab;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.home.home-branded .home-play-fill {
+  top: auto;
+  height: 2px;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(255, 210, 140, 0.8);
+}
+
+/* The connection lost: the title screen again over everything, Reconnect in place of Play. */
+.home.home-again {
+  z-index: 60;
+  pointer-events: auto;
+}
+
+/* Singleplayer and Multiplayer, one over the other. */
+.home.home-branded .home-actions.home-two-ways {
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}

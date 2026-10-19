@@ -1,0 +1,231 @@
+/* The creative inventory as Minecraft draws it (ui/mcinventory.ts). Lengths are GUI pixels: --g is one. */
+.mcinv {
+  --g: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 16, 16, 0.63);
+  font-family: 'Pixelify Sans', var(--pixel), monospace;
+  font-size: calc(28 * var(--g) / 3);
+  line-height: calc(9 * var(--g));
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+  image-rendering: pixelated;
+  user-select: none;
+  cursor: default;
+}
+.mcinv.hidden { display: none; }
+.mcinv-frame { position: relative; width: calc(195 * var(--g)); }
+
+/* The panel: grey, a black line round it, light along the top and left, shade along the bottom and right. */
+.mcinv-panel {
+  position: relative;
+  width: calc(195 * var(--g));
+  height: calc(136 * var(--g));
+  box-sizing: border-box;
+  background: #c6c6c6;
+  border: var(--g) solid #000;
+  border-radius: calc(3 * var(--g));
+  box-shadow: inset calc(2 * var(--g)) calc(2 * var(--g)) 0 #fff, inset calc(-2 * var(--g)) calc(-2 * var(--g)) 0 #555;
+  z-index: 1;
+}
+.mcinv-title { position: absolute; left: calc(7 * var(--g)); top: calc(5 * var(--g)); color: #404040; white-space: nowrap; }
+.mcinv-search {
+  position: absolute; left: calc(81 * var(--g)); top: calc(4 * var(--g)); width: calc(90 * var(--g)); height: calc(12 * var(--g));
+  box-sizing: border-box; padding: 0 calc(2 * var(--g)); display: none;
+  background: #000; color: #fff; border: var(--g) solid #a0a0a0; border-radius: 0; outline: none;
+  font: inherit; line-height: calc(10 * var(--g)); caret-color: #fff;
+}
+.mcinv.is-search .mcinv-search { display: block; }
+
+/* Slots: a shade darker than the panel, sunk (dark along the top and left, light along the bottom and right). */
+.mcinv-grid { position: absolute; left: calc(7 * var(--g)); top: calc(16 * var(--g)); width: calc(162 * var(--g)); display: grid; grid-template-columns: repeat(9, calc(18 * var(--g))); }
+.mcinv-hotbar { position: absolute; left: calc(7 * var(--g)); top: calc(110 * var(--g)); display: grid; grid-template-columns: repeat(9, calc(18 * var(--g))); }
+.mcinv-slot {
+  position: relative; width: calc(18 * var(--g)); height: calc(18 * var(--g)); box-sizing: border-box;
+  background: #8b8b8b;
+  border: var(--g) solid; border-color: #373737 #fff #fff #373737;
+}
+.mcinv-slot img { display: block; width: calc(16 * var(--g)); height: calc(16 * var(--g)); image-rendering: auto; pointer-events: none; }
+.mcinv-slot:hover::after { content: ''; position: absolute; inset: 0; background: rgba(255, 255, 255, 0.5); pointer-events: none; }
+
+/* The scroll bar: a sunk track with a raised knob. */
+.mcinv-track {
+  position: absolute; left: calc(173 * var(--g)); top: calc(16 * var(--g)); width: calc(14 * var(--g)); height: calc(112 * var(--g)); box-sizing: border-box;
+  background: #8b8b8b; border: var(--g) solid; border-color: #373737 #fff #fff #373737;
+}
+.mcinv-knob {
+  position: absolute; left: 0; top: 0; width: calc(12 * var(--g)); height: calc(15 * var(--g)); box-sizing: border-box;
+  background: #c6c6c6; border: var(--g) solid; border-color: #fff #555 #555 #fff;
+}
+.mcinv-track.is-idle .mcinv-knob { background: #8b8b8b; border-color: #a7a7a7 #555 #555 #a7a7a7; }
+
+/* Tabs: along the top, joined to the panel when open. */
+.mcinv-tabs { display: flex; height: calc(28 * var(--g)); margin-bottom: calc(-4 * var(--g)); padding: 0 calc(1 * var(--g)); gap: calc(1 * var(--g)); }
+.mcinv-tabs.is-bottom { margin: calc(-4 * var(--g)) 0 0; align-items: flex-end; }
+.mcinv-tabs:empty { display: none; }
+.mcinv-tab {
+  width: calc(26 * var(--g)); height: calc(28 * var(--g)); box-sizing: border-box; padding: calc(5 * var(--g)) 0 0;
+  display: flex; justify-content: center; align-items: flex-start;
+  background: #8b8b8b; border: var(--g) solid #000; border-bottom: 0; border-radius: calc(3 * var(--g)) calc(3 * var(--g)) 0 0;
+  box-shadow: inset calc(2 * var(--g)) calc(2 * var(--g)) 0 #c6c6c6, inset calc(-2 * var(--g)) 0 0 #373737;
+  cursor: default; font: inherit;
+}
+.mcinv-tab.is-right { margin-left: auto; }
+.mcinv-tab.is-open { background: #c6c6c6; height: calc(32 * var(--g)); margin-top: calc(-4 * var(--g)); padding-top: calc(6 * var(--g)); z-index: 2; box-shadow: inset calc(2 * var(--g)) calc(2 * var(--g)) 0 #fff, inset calc(-2 * var(--g)) 0 0 #555; }
+.mcinv-tab img { width: calc(16 * var(--g)); height: calc(16 * var(--g)); pointer-events: none; }
+/* (The search tab's glass.) */
+.mcinv-glass { position: relative; width: calc(16 * var(--g)); height: calc(16 * var(--g)); }
+.mcinv-glass::before { content: ''; position: absolute; left: calc(2 * var(--g)); top: calc(1 * var(--g)); width: calc(8 * var(--g)); height: calc(8 * var(--g)); box-sizing: border-box; border: calc(2 * var(--g)) solid #3a3a3a; border-radius: 50%; background: #a8d8ff; }
+.mcinv-glass::after { content: ''; position: absolute; left: calc(9 * var(--g)); top: calc(8 * var(--g)); width: calc(6 * var(--g)); height: calc(2 * var(--g)); background: #6b4a2b; transform: rotate(45deg); transform-origin: left center; }
+
+/* What's in hand follows the pointer; the name of what's under it stands beside it. */
+.mcinv-ghost { position: fixed; display: none; width: calc(16 * var(--g)); height: calc(16 * var(--g)); margin: calc(-8 * var(--g)) 0 0 calc(-8 * var(--g)); pointer-events: none; z-index: 5; }
+.mcinv-tip {
+  position: fixed; display: none; z-index: 6; pointer-events: none; white-space: nowrap;
+  padding: calc(3 * var(--g)) calc(4 * var(--g)) calc(2 * var(--g));
+  color: #fff; text-shadow: var(--g) var(--g) 0 #3f3f3f;
+  background: rgba(16, 0, 16, 0.94);
+  border: var(--g) solid transparent; border-radius: calc(2 * var(--g));
+  box-shadow: inset 0 0 0 var(--g) rgba(80, 0, 255, 0.45);
+}
+
+/* A tab whose picture is an item's (redstone dust, a pickaxe): flat, as Minecraft draws items. */
+.mcinv-tab img.is-item { image-rendering: pixelated; }
+
+/* The bottom row of tabs hangs under the panel: rounded at the foot, open one reaching up into it. */
+.mcinv-tabs.is-bottom .mcinv-tab {
+  padding: calc(4 * var(--g)) 0 0;
+  border: var(--g) solid #000; border-top: 0; border-radius: 0 0 calc(3 * var(--g)) calc(3 * var(--g));
+  box-shadow: inset calc(2 * var(--g)) 0 0 #c6c6c6, inset calc(-2 * var(--g)) calc(-2 * var(--g)) 0 #373737;
+  align-self: flex-start;
+}
+.mcinv-tabs.is-bottom .mcinv-tab.is-open { height: calc(32 * var(--g)); margin-top: calc(-4 * var(--g)); padding-top: calc(8 * var(--g)); box-shadow: inset calc(2 * var(--g)) 0 0 #fff, inset calc(-2 * var(--g)) calc(-2 * var(--g)) 0 #555; }
+
+/* Their own inventory (the chest tab): Minecraft's, in place of the blocks to choose from. */
+.mcinv-own, .mcinv-person { display: none; }
+.mcinv.is-inventory .mcinv-grid, .mcinv.is-inventory .mcinv-track { display: none; }
+.mcinv.is-inventory .mcinv-own { display: grid; position: absolute; left: calc(7 * var(--g)); top: calc(52 * var(--g)); grid-template-columns: repeat(9, calc(18 * var(--g))); }
+.mcinv.is-inventory .mcinv-person { display: block; position: absolute; left: calc(7 * var(--g)); top: calc(4 * var(--g)); width: calc(180 * var(--g)); height: calc(46 * var(--g)); }
+.mcinv.is-inventory .mcinv-title { display: none; }
+.mcinv-worn { position: absolute; left: calc(46 * var(--g)); top: 0; display: grid; grid-template-columns: repeat(2, calc(18 * var(--g))); gap: calc(6 * var(--g)) calc(54 * var(--g)); }
+.mcinv-doll { position: absolute; left: calc(66 * var(--g)); top: 0; width: calc(32 * var(--g)); height: calc(43 * var(--g)); box-sizing: border-box; background: #000; border: var(--g) solid; border-color: #373737 #fff #fff #373737; }
+.mcinv-doll::after { content: ''; position: absolute; left: 50%; bottom: calc(3 * var(--g)); width: calc(14 * var(--g)); height: calc(32 * var(--g)); translate: -50% 0; background: linear-gradient(#c68e63 0 25%, #2ba0a8 25% 62%, #3c3ca8 62% 100%); clip-path: polygon(22% 0, 78% 0, 78% 25%, 100% 25%, 100% 62%, 78% 62%, 78% 100%, 22% 100%, 22% 62%, 0 62%, 0 25%, 22% 25%); }
+.mcinv-slot.is-worn::before { content: ''; position: absolute; inset: calc(3 * var(--g)); opacity: 0.35; background: #555; }
+.mcinv-slot.is-helmet::before { clip-path: polygon(10% 30%, 90% 30%, 90% 80%, 70% 80%, 70% 55%, 30% 55%, 30% 80%, 10% 80%); }
+.mcinv-slot.is-chestplate::before { clip-path: polygon(0 10%, 30% 10%, 50% 25%, 70% 10%, 100% 10%, 100% 45%, 80% 45%, 80% 100%, 20% 100%, 20% 45%, 0 45%); }
+.mcinv-slot.is-leggings::before { clip-path: polygon(15% 5%, 85% 5%, 85% 100%, 58% 100%, 58% 40%, 42% 40%, 42% 100%, 15% 100%); }
+.mcinv-slot.is-boots::before { clip-path: polygon(10% 40%, 40% 40%, 40% 100%, 10% 100%, 10% 40%, 60% 40%, 90% 40%, 90% 100%, 60% 100%, 60% 40%); }
+.mcinv-slot.is-shield { position: absolute; left: calc(28 * var(--g)); top: calc(24 * var(--g)); }
+.mcinv-slot.is-shield::before { clip-path: polygon(15% 5%, 85% 5%, 85% 60%, 50% 100%, 15% 60%); }
+.mcinv-bin { position: absolute; left: calc(166 * var(--g)); top: calc(24 * var(--g)); }
+.mcinv-bin::before { content: '\00d7'; position: absolute; inset: 0; display: grid; place-items: center; color: #b02e26; font-size: calc(14 * var(--g)); line-height: 1; }
+
+/* Survival: their own inventory alone (no blocks to choose from, so no tabs), each stack with how many. */
+/* (Where the game has a page of its own, its tab and the one for what they carry stay; the builder's tabs go.) */
+.mcinv.is-survival:not(.has-pages) .mcinv-tabs { visibility: hidden; }
+.mcinv.is-survival.has-pages .mcinv-tab:not(.is-own) { visibility: hidden; }
+/* A page of the game's own: the slot in use is bordered; what's told of a slot may run to several lines. */
+.mcinv-slot.is-chosen { box-shadow: inset 0 0 0 var(--g) #3fe07a, inset 0 0 0 calc(2 * var(--g)) #16702f; background: #9fbf9f; }
+.mcinv-tip { white-space: pre; line-height: 1.35; }
+
+/* A tool's wear: Minecraft's bar under its picture. */
+.mcinv-wear { position: absolute; left: calc(2 * var(--g)); right: calc(2 * var(--g)); bottom: calc(2 * var(--g)); height: calc(2 * var(--g)); background: #000; pointer-events: none; }
+.mcinv-wear > span { display: block; height: calc(1 * var(--g)); }
+
+/* A container beside what they carry (a crafting grid, a furnace): its slots where Minecraft's screens have them. */
+.mcinv-container { display: none; }
+.mcinv.has-container .mcinv-container { display: block; position: absolute; left: 0; top: 0; width: 100%; height: calc(82 * var(--g)); pointer-events: none; }
+.mcinv-container > * { pointer-events: auto; }
+.mcinv-container .mcinv-slot { position: absolute; }
+.mcinv-container-title { position: absolute; color: #404040; white-space: nowrap; pointer-events: none; }
+.mcinv-slot.is-output { width: calc(26 * var(--g)); height: calc(26 * var(--g)); padding: calc(4 * var(--g)); }
+.mcinv-arrow { position: absolute; width: calc(22 * var(--g)); height: calc(15 * var(--g)); background: #8b8b8b; clip-path: polygon(0 35%, 60% 35%, 60% 0, 100% 50%, 60% 100%, 60% 65%, 0 65%); pointer-events: none; }
+.mcinv-arrow > span { display: block; height: 100%; width: 0; background: #fff; }
+.mcinv-flame { position: absolute; width: calc(14 * var(--g)); height: calc(14 * var(--g)); background: #8b8b8b; clip-path: polygon(50% 0, 75% 30%, 100% 55%, 85% 100%, 15% 100%, 0 55%, 25% 30%); display: flex; align-items: flex-end; pointer-events: none; }
+.mcinv-flame > span { display: block; width: 100%; height: 0; background: linear-gradient(#ffd23a, #e8501a); }
+
+/* The inventory's own 2×2 grid, beside their figure (no armour slots: none to wear here). */
+.mcinv.has-container:not(.is-tall) .mcinv-worn, .mcinv.has-container .mcinv-slot.is-shield, .mcinv.has-container .mcinv-bin { display: none; }
+.mcinv.has-container:not(.is-tall) .mcinv-doll { left: calc(19 * var(--g)); }
+.mcinv-container.is-crafting.has-5 .mcinv-container-title { left: calc(97 * var(--g)); top: calc(6 * var(--g)); }
+.mcinv-container.is-crafting.has-5 .at-0 { left: calc(97 * var(--g)); top: calc(17 * var(--g)); }
+.mcinv-container.is-crafting.has-5 .at-1 { left: calc(115 * var(--g)); top: calc(17 * var(--g)); }
+.mcinv-container.is-crafting.has-5 .at-2 { left: calc(97 * var(--g)); top: calc(35 * var(--g)); }
+.mcinv-container.is-crafting.has-5 .at-3 { left: calc(115 * var(--g)); top: calc(35 * var(--g)); }
+.mcinv-container.is-crafting.has-5 .at-4 { left: calc(161 * var(--g)); top: calc(22 * var(--g)); }
+.mcinv-container.is-crafting.has-5 .mcinv-arrow { left: calc(136 * var(--g)); top: calc(28 * var(--g)); width: calc(18 * var(--g)); }
+
+/* A crafting table's screen and a furnace's: taller, their grid where their figure was. */
+.mcinv.is-tall .mcinv-panel { height: calc(166 * var(--g)); }
+.mcinv.is-tall .mcinv-person { display: none !important; }
+.mcinv.is-tall .mcinv-own { top: calc(82 * var(--g)) !important; }
+.mcinv.is-tall .mcinv-hotbar { top: calc(140 * var(--g)); }
+.mcinv.is-tall .mcinv-container-title { left: calc(28 * var(--g)); top: calc(5 * var(--g)); }
+.mcinv-container.is-crafting.has-10 .at-0 { left: calc(29 * var(--g)); top: calc(16 * var(--g)); }
+.mcinv-container.is-crafting.has-10 .at-1 { left: calc(47 * var(--g)); top: calc(16 * var(--g)); }
+.mcinv-container.is-crafting.has-10 .at-2 { left: calc(65 * var(--g)); top: calc(16 * var(--g)); }
+.mcinv-container.is-crafting.has-10 .at-3 { left: calc(29 * var(--g)); top: calc(34 * var(--g)); }
+.mcinv-container.is-crafting.has-10 .at-4 { left: calc(47 * var(--g)); top: calc(34 * var(--g)); }
+.mcinv-container.is-crafting.has-10 .at-5 { left: calc(65 * var(--g)); top: calc(34 * var(--g)); }
+.mcinv-container.is-crafting.has-10 .at-6 { left: calc(29 * var(--g)); top: calc(52 * var(--g)); }
+.mcinv-container.is-crafting.has-10 .at-7 { left: calc(47 * var(--g)); top: calc(52 * var(--g)); }
+.mcinv-container.is-crafting.has-10 .at-8 { left: calc(65 * var(--g)); top: calc(52 * var(--g)); }
+.mcinv-container.is-crafting.has-10 .at-9 { left: calc(123 * var(--g)); top: calc(30 * var(--g)); }
+.mcinv-container.is-crafting.has-10 .mcinv-arrow { left: calc(92 * var(--g)); top: calc(36 * var(--g)); }
+.mcinv-container.is-furnace .at-0 { left: calc(55 * var(--g)); top: calc(16 * var(--g)); }
+.mcinv-container.is-furnace .at-1 { left: calc(55 * var(--g)); top: calc(52 * var(--g)); }
+.mcinv-container.is-furnace .at-2 { left: calc(115 * var(--g)); top: calc(30 * var(--g)); }
+.mcinv-container.is-furnace .mcinv-flame { left: calc(57 * var(--g)); top: calc(36 * var(--g)); }
+.mcinv-container.is-furnace .mcinv-arrow { left: calc(79 * var(--g)); top: calc(35 * var(--g)); }
+/* An item's stats under its name (\`ItemBase.tooltip\`): Minecraft's way, each with its little picture. */
+.mcinv-tip-name { margin-bottom: calc(1 * var(--g)); }
+/* (Smaller than its name: the stats and the lore under it. Sean, 2026-10-15.) */
+.mcinv-tip-line { color: #aaa; display: flex; align-items: center; gap: calc(2 * var(--g)); font-size: 0.78em; line-height: 1.3; }
+.mcinv-tip-line img { width: calc(7 * var(--g)); height: calc(7 * var(--g)); image-rendering: pixelated; }
+.mcinv-tip-line.is-lore { font-style: italic; color: #a87fd6; white-space: normal; max-width: calc(170 * var(--g)); }
+.mcinv-tip-line.is-gap { height: calc(4 * var(--g)); }
+.mcinv-tab.is-own img { image-rendering: auto; }
+.mcinv.is-survival .mcinv-bin { display: none; }
+.mcinv-count { position: absolute; right: 0; bottom: calc(-1 * var(--g)); color: #fff; text-shadow: var(--g) var(--g) 0 #3f3f3f; pointer-events: none; z-index: 1; }
+
+/* Their figure in their inventory, live (the drawn stand-in shows only where there's none). */
+.mcinv-doll-view { position: absolute; inset: 0; width: 100%; height: 100%; display: none; }
+.mcinv.has-doll .mcinv-doll-view { display: block; }
+.mcinv.has-doll .mcinv-doll::after { display: none; }
+/* Sparks off what's moved about in the inventory. */
+.mcinv-spark { position: fixed; width: calc(2 * var(--g)); height: calc(2 * var(--g)); pointer-events: none; z-index: 7; }
+
+/* The open tab stands behind the panel as the others do (the panel's edge runs unbroken across it): lighter, and a little taller. */
+.mcinv-tab.is-open { z-index: 0; }
+
+/* A slot with armour in it: its picture, without the slot's own shadow of what goes there. */
+.mcinv-slot.is-worn.is-filled::before { display: none; }
+.mcinv-slot.is-worn { cursor: pointer; }
+
+/* A page's own panel, beside the inventory (to its right, its top level with the panel's): there while that page is open. */
+.mcinv-side { display: none; position: absolute; left: calc(100% + 4 * var(--g)); top: calc(24 * var(--g)); width: calc(80 * var(--g)); z-index: -1; }
+/* (The inventory moves over by half of what its page's panel takes, so the two together sit in the middle: they fit wherever the inventory itself does, which a screen 320 GUI pixels wide always has room for.) */
+.mcinv.is-page.has-side .mcinv-frame { left: calc(-42 * var(--g)); }
+.mcinv-frame { z-index: 0; }
+/* (What a page shows beside the inventory may be drawn in the game's own picture, under the page: a pet, alive. The screen's shade is then the panel's own to lay, round the window it leaves for it: `has-side`.) */
+.mcinv.is-page.has-side { background: none; }
+.mcinv.is-page .mcinv-side { display: block; }
+
+/* What a game sets round a survivor's own inventory: the clear space to its left and to its right (under the inventory, where they'd meet), and a place among what they wear. The game lays the screen's shade itself then. */
+.mcinv-left, .mcinv-right { display: none; position: absolute; top: 0; bottom: 0; width: calc(50% - 99.5 * var(--g)); z-index: 0; }
+.mcinv-left { left: 0; }
+.mcinv-right { right: 0; }
+.mcinv-extra { display: none; position: absolute; left: calc(67.5 * var(--g)); top: calc(0.5 * var(--g)); width: calc(45 * var(--g)); height: calc(45 * var(--g)); }
+/* (The four slots for what's worn, lent to what the game's set there: the inventory's own figure of them and its own shield slot are left out.) */
+.mcinv.own-worn .mcinv-doll, .mcinv.own-worn .mcinv-slot.is-shield, .mcinv.own-worn .mcinv-worn { display: none; }
+.mcinv.is-survival.is-inventory.has-around .mcinv-left, .mcinv.is-survival.is-inventory.has-around .mcinv-right, .mcinv.is-survival.is-inventory.has-around .mcinv-extra { display: block; }
+.mcinv.is-survival.is-inventory.has-around { background: none; }
+/* A survivor's page with a head of the game's: laid out as their own inventory is (the head where what they wear is, three rows under it), with what's set round their inventory still round it. */
+.mcinv-head { display: none; position: absolute; left: calc(7 * var(--g)); top: calc(4 * var(--g)); width: calc(180 * var(--g)); height: calc(46 * var(--g)); }
+.mcinv.is-page-own .mcinv-head { display: block; }
+.mcinv.is-page-own .mcinv-title { display: none; }
+.mcinv.is-page-own .mcinv-grid { top: calc(52 * var(--g)); }
+.mcinv.is-page-own .mcinv-track { top: calc(52 * var(--g)); height: calc(56 * var(--g)); }
+.mcinv.is-survival.is-page-own.has-around .mcinv-left, .mcinv.is-survival.is-page-own.has-around .mcinv-right { display: block; }
+.mcinv.is-survival.is-page-own.has-around { background: none; }

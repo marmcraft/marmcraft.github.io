@@ -1,0 +1,92 @@
+/* Mineclonia's look (`hud.style: 'mineclonia'`; ported from mconline): its hotbar, drawn with
+   Mineclonia's own mcl_inventory pictures (a 182x22 bar, a 24x24 selection, nine 20 px cells).
+   The icons, the keys and wheel to choose a slot, and touch placement stay MARM's own. */
+body.mineclonia-look .hotbar {
+  --hotbar-pixel: 3px;
+  width: calc(182 * var(--hotbar-pixel));
+  height: calc(22 * var(--hotbar-pixel));
+  padding: var(--hotbar-pixel);
+  gap: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent url('./assets/mineclonia/mcl_inventory_hotbar.png') center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+body.mineclonia-look:not(.touch-playing) .hotbar {
+  bottom: 0;
+}
+body.mineclonia-look .hotbar .slot {
+  width: calc(20 * var(--hotbar-pixel));
+  height: calc(20 * var(--hotbar-pixel));
+  flex: none;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  transform: none;
+  box-shadow: none;
+  transition: none;
+}
+body.mineclonia-look .hotbar .slot.selected::before {
+  content: '';
+  position: absolute;
+  inset: calc(-2 * var(--hotbar-pixel));
+  background: url('./assets/mineclonia/mcl_inventory_hotbar_selected.png') center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+body.mineclonia-look .hotbar .slot img {
+  position: relative;
+  width: calc(16 * var(--hotbar-pixel));
+  height: calc(16 * var(--hotbar-pixel));
+  filter: none;
+}
+body.mineclonia-look .hotbar .slot .key {
+  display: none;
+}
+body.mineclonia-look .hotbar .slot .count {
+  z-index: 1;
+  right: calc(2 * var(--hotbar-pixel));
+  bottom: var(--hotbar-pixel);
+  color: #fff;
+  text-shadow: 2px 2px #333;
+}
+@media (max-width: 600px) {
+  body.mineclonia-look .hotbar { --hotbar-pixel: 2px; }
+}
+@media (max-width: 370px) {
+  body.mineclonia-look .hotbar { --hotbar-pixel: 1.5px; }
+}
+
+/* Hearts, as Minecraft's sit (in survival): nine GUI pixels each on an eight-pixel pitch, the row
+   starting at the hotbar's left edge, just above it, at the hotbar's scale. */
+body.mineclonia-look {
+  --mc-px: 3px;
+}
+@media (max-width: 600px) {
+  body.mineclonia-look { --mc-px: 2px; }
+}
+@media (max-width: 370px) {
+  body.mineclonia-look { --mc-px: 1.5px; }
+}
+body.mineclonia-look:not(.touch-playing) .hearts {
+  left: 50%;
+  bottom: calc(24 * var(--mc-px));
+  transform: translateX(calc(-91 * var(--mc-px)));
+  gap: 0;
+  filter: none;
+}
+body.mineclonia-look .heart {
+  width: calc(9 * var(--mc-px));
+  height: calc(9 * var(--mc-px));
+  margin-right: calc(-1 * var(--mc-px));
+}
+body.mineclonia-look:not(.touch-playing) .hearts.shake {
+  animation: hearts-shake-mc 0.35s ease-out;
+}
+@keyframes hearts-shake-mc {
+  20% { transform: translateX(calc(-91 * var(--mc-px) - 4px)); }
+  40% { transform: translateX(calc(-91 * var(--mc-px) + 4px)); }
+}

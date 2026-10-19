@@ -1,0 +1,407 @@
+/**
+ * Survival's item pictures, painted here pixel by pixel (no picture files): a 16×16 grid of letters each, one a
+ * pixel, in a palette of its own. Tools share a shape per kind (a pickaxe, an axe…) in each material's colours; the
+ * rest are shapes of their own. They go into one atlas the game hands every screen (`items.atlas`).
+ */
+
+/** Light and dark of each tool material's head, and the handle's. */
+export const MATERIAL_COLOURS: Record<string, [string, string]> = {
+  wooden: ['#a8834d', '#6b4f2a'],
+  stone: ['#9d9d9d', '#5b5b5b'],
+  iron: ['#ececec', '#a0a0a0'],
+  golden: ['#fbe46a', '#c9a11c'],
+  diamond: ['#7af0e2', '#1d9a90'],
+};
+const STICK: [string, string] = ['#8b6a3e', '#5a4120'];
+
+/** The tools' shapes: H/h the head (light, dark), S/s the handle. */
+const TOOLS: Record<string, string[]> = {
+  pickaxe: [
+    '................',
+    '....hHHHHHHh....',
+    '...hHHHHHHHHh...',
+    '..hHh.....sHHh..',
+    '..Hh.....sS.hH..',
+    '..h.....sS...h..',
+    '.......sS.......',
+    '......sS........',
+    '.....sS.........',
+    '....sS..........',
+    '...sS...........',
+    '..sS............',
+    '.sS.............',
+    '................',
+    '................',
+    '................',
+  ],
+  axe: [
+    '................',
+    '.......hHHh.....',
+    '......hHHHHh....',
+    '......HHHHHh....',
+    '......hHHHSh....',
+    '........sSHh....',
+    '.......sS.hh....',
+    '......sS........',
+    '.....sS.........',
+    '....sS..........',
+    '...sS...........',
+    '..sS............',
+    '.sS.............',
+    '................',
+    '................',
+    '................',
+  ],
+  shovel: [
+    '................',
+    '..........hHh...',
+    '.........hHHHh..',
+    '.........HHHHH..',
+    '.........hHHHh..',
+    '........sShh....',
+    '.......sS.......',
+    '......sS........',
+    '.....sS.........',
+    '....sS..........',
+    '...sS...........',
+    '..sS............',
+    '.sS.............',
+    '................',
+    '................',
+    '................',
+  ],
+  sword: [
+    '..............hH',
+    '.............hHH',
+    '............hHHh',
+    '...........hHHh.',
+    '..........hHHh..',
+    '.........hHHh...',
+    '........hHHh....',
+    '...hh..hHHh.....',
+    '....hhhHHh......',
+    '.....hHHh.......',
+    '.....shHh.......',
+    '....sS.hh.......',
+    '...sS...........',
+    '..sS............',
+    '.ss.............',
+    '................',
+  ],
+  hoe: [
+    '................',
+    '.......hHHHHh...',
+    '......hHHHHHh...',
+    '...........sS...',
+    '..........sS....',
+    '.........sS.....',
+    '........sS......',
+    '.......sS.......',
+    '......sS........',
+    '.....sS.........',
+    '....sS..........',
+    '...sS...........',
+    '..sS............',
+    '.sS.............',
+    '................',
+    '................',
+  ],
+};
+
+/** The other items' shapes: A light, B mid, C dark, D the darkest (an outline), E what's in it (a bucket's water). */
+const SHAPES: Record<string, string[]> = {
+  stick: [
+    '................',
+    '................',
+    '............AB..',
+    '...........AB...',
+    '..........AB....',
+    '.........AB.....',
+    '........AB......',
+    '.......AB.......',
+    '......AB........',
+    '.....AB.........',
+    '....AB..........',
+    '...AB...........',
+    '..AB............',
+    '................',
+    '................',
+    '................',
+  ],
+  ingot: [
+    '................',
+    '................',
+    '................',
+    '................',
+    '.......DDDDD....',
+    '.....DDAAAAAD...',
+    '...DDAAAAAABCD..',
+    '..DAAAAAABBCCD..',
+    '..DBBBBBBCCCD...',
+    '...DCCCCCCCD....',
+    '....DDDDDDD.....',
+    '................',
+    '................',
+    '................',
+    '................',
+    '................',
+  ],
+  gem: [
+    '................',
+    '................',
+    '.....DDDDDD.....',
+    '....DAAAABBD....',
+    '...DAAABBBBCD...',
+    '..DAABBBBBBCCD..',
+    '..DBBBBBBBCCCD..',
+    '...DBBBBBCCCD...',
+    '....DBBBCCCD....',
+    '.....DBCCCD.....',
+    '......DCCD......',
+    '.......DD.......',
+    '................',
+    '................',
+    '................',
+    '................',
+  ],
+  lump: [
+    '................',
+    '................',
+    '................',
+    '......DDDD......',
+    '....DDAABBDD....',
+    '...DAAABBBBCD...',
+    '..DAABBBBCBBCD..',
+    '..DABBCBBBBBCD..',
+    '..DBBBBBBCBCCD..',
+    '...DBCBBBBCCD...',
+    '...DCCCBCCCD....',
+    '....DDCCCCD.....',
+    '......DDDD......',
+    '................',
+    '................',
+    '................',
+  ],
+  dust: [
+    '................',
+    '................',
+    '................',
+    '................',
+    '................',
+    '........A.......',
+    '.....A.....B....',
+    '.......AB.......',
+    '...B..ABBA..A...',
+    '.....ABBBCB.....',
+    '...AABBCBBCB.B..',
+    '..ABBCBBCCBCC...',
+    '..BCCBCCCCCCCB..',
+    '................',
+    '................',
+    '................',
+  ],
+  shard: [
+    '................',
+    '................',
+    '........DD......',
+    '.......DABD.....',
+    '......DAABBD....',
+    '.....DAABBBCD...',
+    '....DABBBBCCD...',
+    '....DBBBBCCCD...',
+    '...DBBBBCCCD....',
+    '...DBBBCCCD.....',
+    '...DBCCCCD......',
+    '....DCCDD.......',
+    '.....DD.........',
+    '................',
+    '................',
+    '................',
+  ],
+  nugget: [
+    '................',
+    '................',
+    '................',
+    '................',
+    '................',
+    '................',
+    '.......DDD......',
+    '......DAABD.....',
+    '.....DAABBCD....',
+    '.....DBBBCCD....',
+    '......DCCCD.....',
+    '.......DDD......',
+    '................',
+    '................',
+    '................',
+    '................',
+  ],
+  ball: [
+    '................',
+    '................',
+    '................',
+    '................',
+    '......DDDD......',
+    '.....DAABBD.....',
+    '....DAABBBCD....',
+    '....DABBBBCD....',
+    '....DBBBBCCD....',
+    '....DBBBCCCD....',
+    '.....DCCCCD.....',
+    '......DDDD......',
+    '................',
+    '................',
+    '................',
+    '................',
+  ],
+  brick: [
+    '................',
+    '................',
+    '................',
+    '................',
+    '................',
+    '.....DDDDDDDD...',
+    '....DAAAAAABBD..',
+    '...DAAAAAABBCD..',
+    '..DBBBBBBBBCCD..',
+    '..DBBBBBBBCCD...',
+    '..DCCCCCCCCD....',
+    '...DDDDDDDD.....',
+    '................',
+    '................',
+    '................',
+    '................',
+  ],
+  flintsteel: [
+    '................',
+    '..........DDD...',
+    '.........DAABD..',
+    '........DABBCD..',
+    '........DBBCCD..',
+    '.........DCCD...',
+    '..........DD....',
+    '................',
+    '...DDDD.........',
+    '..DAAABD........',
+    '..DA..BD........',
+    '..DB..CD........',
+    '..DBBCCD........',
+    '...DDDD.........',
+    '................',
+    '................',
+  ],
+  bucket: [
+    '................',
+    '................',
+    '................',
+    '...DDDDDDDDDD...',
+    '..DAEEEEEEEEBD..',
+    '..DAEEEEEEEEBD..',
+    '..DDDDDDDDDDDD..',
+    '...DABBBBBBCD...',
+    '...DABBBBBBCD...',
+    '....DABBBBCD....',
+    '....DABBBBCD....',
+    '....DABBBBCD....',
+    '.....DDDDDD.....',
+    '................',
+    '................',
+    '................',
+  ],
+  apple: [
+    '................',
+    '........D.......',
+    '........DA......',
+    '.......D.AA.....',
+    '.....DDDDDD.....',
+    '....DAABBBBD....',
+    '...DAABBBBBCD...',
+    '...DABBBBBBCD...',
+    '...DBBBBBBBCD...',
+    '...DBBBBBBCCD...',
+    '....DBBBBCCD....',
+    '.....DCDDCD.....',
+    '......D..D......',
+    '................',
+    '................',
+    '................',
+  ],
+};
+
+/** Each item's picture: a tool (its kind and material) or a shape in its colours (light, mid, dark, outline). */
+export const ITEM_ART: Record<string, { tool: string; material: string } | { shape: string; colours: [string, string, string, string, string?] }> = {
+  stick: { shape: 'stick', colours: ['#a07a46', '#6b4f2a', '#6b4f2a', '#3a2a14'] },
+  coal: { shape: 'lump', colours: ['#4a4a4a', '#2a2a2a', '#151515', '#050505'] },
+  charcoal: { shape: 'lump', colours: ['#5a4632', '#3a2b1d', '#22180f', '#0d0905'] },
+  raw_iron: { shape: 'lump', colours: ['#e8c9ad', '#c39a7a', '#8a6248', '#4a3326'] },
+  raw_gold: { shape: 'lump', colours: ['#fff07a', '#e6b72b', '#a8780f', '#5a3d05'] },
+  raw_copper: { shape: 'lump', colours: ['#f2a07a', '#c96a45', '#8a4026', '#4a2012'] },
+  iron_ingot: { shape: 'ingot', colours: ['#ffffff', '#d8d8d8', '#a8a8a8', '#4a4a4a'] },
+  gold_ingot: { shape: 'ingot', colours: ['#fffbb0', '#fbe46a', '#c9a11c', '#6b4f05'] },
+  copper_ingot: { shape: 'ingot', colours: ['#ffc39a', '#e2814f', '#a8522c', '#552511'] },
+  diamond: { shape: 'gem', colours: ['#d8fff9', '#7af0e2', '#1d9a90', '#0b3d3a'] },
+  emerald: { shape: 'gem', colours: ['#c8ffd5', '#3fe07a', '#16904a', '#063a1c'] },
+  lapis_lazuli: { shape: 'shard', colours: ['#8aa8ff', '#2d4fd4', '#1a2c88', '#0a1240'] },
+  redstone: { shape: 'dust', colours: ['#ff6a5a', '#d4180c', '#8a0c05', '#3a0503'] },
+  glowstone_dust: { shape: 'dust', colours: ['#fff6b0', '#f2c94a', '#b8862a', '#5a3f0f'] },
+  flint: { shape: 'shard', colours: ['#7a7a7a', '#4a4a4a', '#2a2a2a', '#0a0a0a'] },
+  iron_nugget: { shape: 'nugget', colours: ['#ffffff', '#d8d8d8', '#9a9a9a', '#3a3a3a'] },
+  gold_nugget: { shape: 'nugget', colours: ['#fffbb0', '#fbe46a', '#c9a11c', '#5a3f05'] },
+  clay_ball: { shape: 'ball', colours: ['#c8ccd8', '#a2a7b8', '#7a7f90', '#3a3d48'] },
+  snowball: { shape: 'ball', colours: ['#ffffff', '#eef4ff', '#c8d4e8', '#7a8aa8'] },
+  brick: { shape: 'brick', colours: ['#e08a6a', '#b4553a', '#7a3220', '#3a160c'] },
+  quartz: { shape: 'gem', colours: ['#ffffff', '#ece6dc', '#c8bfb2', '#5a5248'] },
+  nether_brick: { shape: 'brick', colours: ['#6a2a32', '#4a1c22', '#30111a', '#12060a'] },
+  flint_and_steel: { shape: 'flintsteel', colours: ['#e8e8e8', '#a8a8a8', '#5a5a5a', '#1a1a1a'] },
+  rotten_flesh: { shape: 'lump', colours: ['#c88a5a', '#9a5a3a', '#5a7a32', '#2a1a10'] },
+  bone: { shape: 'stick', colours: ['#f4f0e4', '#d8d2c0', '#d8d2c0', '#8a8474'] },
+  string: { shape: 'stick', colours: ['#f2f2f2', '#c8c8c8', '#c8c8c8', '#6a6a6a'] },
+  gunpowder: { shape: 'dust', colours: ['#8a8a8a', '#5a5a5a', '#3a3a3a', '#1a1a1a'] },
+  eye_of_ender: { shape: 'ball', colours: ['#a8f0c8', '#2fae6e', '#16603c', '#06200f'] },
+  bucket: { shape: 'bucket', colours: ['#e8e8e8', '#b8b8b8', '#8a8a8a', '#3a3a3a', '#2a2a2a'] },
+  water_bucket: { shape: 'bucket', colours: ['#e8e8e8', '#b8b8b8', '#8a8a8a', '#3a3a3a', '#3f76e4'] },
+  lava_bucket: { shape: 'bucket', colours: ['#e8e8e8', '#b8b8b8', '#8a8a8a', '#3a3a3a', '#ff8a1a'] },
+  apple: { shape: 'apple', colours: ['#ff8a7a', '#d81e1e', '#8a0c0c', '#3a0505'] },
+};
+for (const tool of Object.keys(TOOLS)) for (const material of Object.keys(MATERIAL_COLOURS)) ITEM_ART[`${material}_${tool}`] = { tool, material };
+
+const hex = (c: string): [number, number, number] => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+
+/** Every item's picture in one atlas: 16 to a row; and where each is in it. */
+export function paintItems(): { width: number; height: number; pixels: Uint8Array; at: Map<string, { x: number; y: number }> } {
+  const names = Object.keys(ITEM_ART);
+  const width = 256;
+  const height = Math.ceil(names.length / 16) * 16;
+  const pixels = new Uint8Array(width * height * 4);
+  const at = new Map<string, { x: number; y: number }>();
+  names.forEach((name, k) => {
+    const ox = (k % 16) * 16;
+    const oy = Math.floor(k / 16) * 16;
+    at.set(name, { x: ox, y: oy });
+    const art = ITEM_ART[name];
+    let rows: string[];
+    let palette: Record<string, string>;
+    if ('tool' in art) {
+      rows = TOOLS[art.tool];
+      const [hl, hd] = MATERIAL_COLOURS[art.material];
+      palette = { H: hl, h: hd, S: STICK[0], s: STICK[1] };
+    } else {
+      rows = SHAPES[art.shape];
+      const [a, b, c, d, e] = art.colours;
+      palette = { A: a, B: b, C: c, D: d, ...(e && { E: e }) };
+    }
+    rows.forEach((row, y) => {
+      for (let x = 0; x < 16; x++) {
+        const c = palette[row[x]];
+        if (!c) continue;
+        const o = ((oy + y) * width + ox + x) * 4;
+        const [r, g, b] = hex(c);
+        pixels[o] = r;
+        pixels[o + 1] = g;
+        pixels[o + 2] = b;
+        pixels[o + 3] = 255;
+      }
+    });
+  });
+  return { width, height, pixels, at };
+}

@@ -1,0 +1,325 @@
+/* The pause menu as Minecraft has it (ui/mcmenu.ts). `--g` is one of the game's GUI pixels: its
+   screens are laid out in them (a button 20 tall, 150 or 200 wide), at a whole scale the window
+   has room for, as the game picks its own. The font's em is 12 of its pixels, a line of text 8. */
+.pause-screen.mc {
+  padding: 0 !important;
+  background: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.pause-screen.mc > .pause-rail,
+.pause-screen.mc > .pause-main {
+  display: none !important;
+}
+
+.mc-menu {
+  --g: 2px;
+  position: absolute;
+  inset: 0;
+  /* (The game's own wash over the world behind a menu.) */
+  background: linear-gradient(rgba(16, 16, 16, 0.75), rgba(16, 16, 16, 0.82));
+  color: #fff;
+  font: calc(var(--g) * 12) / 1 'Pixelify Sans', var(--pixel), monospace;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+  user-select: none;
+}
+@media (min-width: 1100px) and (min-height: 760px) {
+  .mc-menu {
+    --g: 3px;
+  }
+}
+@media (min-width: 1700px) and (min-height: 1000px) {
+  .mc-menu {
+    --g: 4px;
+  }
+}
+.mc-menu * {
+  box-sizing: border-box;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.mc-screen {
+  position: absolute;
+  inset: 0;
+}
+.mc-screen.hidden {
+  display: none;
+}
+
+.mc-title {
+  position: absolute;
+  top: calc(var(--g) * 15);
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font: inherit;
+  font-weight: normal;
+  color: #fff;
+  text-shadow: var(--g) var(--g) 0 #3f3f3f;
+}
+
+/* The Game Menu: its title a little down, then a column 204 wide from a quarter of the way down,
+   the short buttons two to a row. */
+.mc-game .mc-title {
+  top: calc(var(--g) * 40);
+}
+.mc-column {
+  position: absolute;
+  top: calc(25% + var(--g) * 8);
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(var(--g) * 204);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(var(--g) * 4) calc(var(--g) * 8);
+}
+
+/* A screen of options: two columns of 150 from a sixth of the way down, a row every 21 (OptiFine's
+   pitch), Done 200 wide under them. */
+.mc-grid {
+  position: absolute;
+  top: calc(100% / 6 - var(--g) * 12);
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(var(--g) * 310);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--g) calc(var(--g) * 10);
+}
+/* (Options itself: the field of view's row, then the rest lower down and a row every 24.) */
+.mc-grid.mc-top + .mc-grid {
+  top: calc(100% / 6 + var(--g) * 42);
+  row-gap: calc(var(--g) * 4);
+}
+.mc-menu .wide {
+  grid-column: span 2;
+}
+.mc-foot {
+  position: absolute;
+  top: calc(100% / 6 + var(--g) * 168);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: calc(var(--g) * 10);
+}
+.mc-menu .mc-foot .mc-button {
+  width: calc(var(--g) * 150);
+  flex: none;
+}
+.mc-menu .mc-foot .mc-button:only-child {
+  width: calc(var(--g) * 200);
+}
+
+/* A list (advancements, who's playing, the keys): the game's dark band between the title and Done. */
+.mc-listing .mc-panel {
+  position: absolute;
+  top: calc(var(--g) * 32);
+  bottom: calc(var(--g) * 36);
+  left: 0;
+  right: 0;
+  overflow-y: auto;
+  padding: calc(var(--g) * 6) max(calc(var(--g) * 6), calc(50% - var(--g) * 170));
+  background: rgba(0, 0, 0, 0.5);
+  border-top: var(--g) solid #000;
+  border-bottom: var(--g) solid #000;
+  box-shadow: inset 0 calc(var(--g) * 4) calc(var(--g) * 4) calc(var(--g) * -2) #000, inset 0 calc(var(--g) * -4) calc(var(--g) * 4) calc(var(--g) * -2) #000;
+  font-size: calc(var(--g) * 12);
+  line-height: 1.25;
+  color: #fff;
+  text-shadow: var(--g) var(--g) 0 #3f3f3f;
+  scrollbar-color: #c0c0c0 #000;
+}
+.mc-listing .mc-foot {
+  top: auto;
+  bottom: calc(var(--g) * 8);
+}
+.mc-panel * {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  color: inherit;
+  background: none;
+  border-radius: 0 !important;
+  box-shadow: none;
+}
+.mc-panel small,
+.mc-panel .feat-desc,
+.mc-panel .keybind-hint,
+.mc-empty {
+  color: #a0a0a0 !important;
+}
+.mc-panel .feat,
+.mc-panel .keybind,
+.mc-panel .pause-player {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--g) * 6);
+  margin: 0 0 calc(var(--g) * 4);
+  padding: 0;
+  border: 0;
+}
+.mc-panel .feat {
+  justify-content: flex-start;
+}
+.mc-panel .feat-icon {
+  width: calc(var(--g) * 14);
+  height: calc(var(--g) * 14);
+  flex: none;
+  color: #707070;
+}
+.mc-panel .feat-icon.done {
+  color: #ffff55;
+}
+.mc-panel .pause-players,
+.mc-panel .feats,
+.mc-panel .keybinds {
+  display: block;
+}
+.mc-panel table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.mc-panel td,
+.mc-panel th {
+  padding: calc(var(--g) * 2) calc(var(--g) * 4);
+  text-align: left;
+}
+.mc-panel kbd {
+  padding: 0 calc(var(--g) * 2);
+  border: var(--g) solid #000;
+  background: #555;
+}
+
+/* A button: the stone, a black rim, its words in white with their shadow; yellow words and a
+   lighter stone under the pointer; dark, and grey words, when there's nothing behind it. */
+.mc-menu .mc-button,
+.mc-panel .keycap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: calc(var(--g) * 20);
+  margin: 0;
+  padding: 0 calc(var(--g) * 3);
+  border: var(--g) solid #000;
+  border-radius: 0;
+  background: var(--mc-stone) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+  color: #e0e0e0;
+  font: inherit;
+  font-size: calc(var(--g) * 12);
+  text-shadow: var(--g) var(--g) 0 #383838;
+  cursor: pointer;
+  transform: none;
+  transition: none;
+  box-shadow: none;
+}
+.mc-panel .keycap {
+  width: calc(var(--g) * 75);
+  flex: none;
+  background: var(--mc-stone) center / 100% 100% no-repeat !important;
+  color: #e0e0e0 !important;
+}
+.mc-panel .keycap.changed {
+  color: #ffff55 !important;
+}
+.mc-panel .keycap.listening {
+  color: #ffff55 !important;
+  border-color: #fff;
+}
+.mc-button span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: clip;
+  /* (The font's letters sit a pixel high in their line.) */
+  padding-top: var(--g);
+}
+.mc-menu .mc-button:hover:not(:disabled),
+.mc-menu .mc-button:focus-visible,
+.mc-panel .keycap:hover {
+  background-image: var(--mc-stone-hover) !important;
+  border-color: #fff;
+  color: #ffffa0;
+  outline: none;
+}
+.mc-menu .mc-button:disabled {
+  background-image: var(--mc-stone-off);
+  color: #a0a0a0;
+  text-shadow: none;
+  cursor: default;
+}
+
+/* A slider: a dark bed the width of a button, its handle a sliver of stone, its name and value
+   written across it. */
+.mc-slider {
+  position: relative;
+  display: block;
+  height: calc(var(--g) * 20);
+  border: var(--g) solid #000;
+  background: var(--mc-stone-off) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+/* The whole button is the slider: a click anywhere on it goes there, and a drag from anywhere moves it. */
+.mc-slider input[type='range'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: calc(var(--g) * 18);
+  border-radius: 0;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.mc-slider input[type='range']::-webkit-slider-runnable-track {
+  height: calc(var(--g) * 18);
+  background: transparent;
+}
+.mc-slider input[type='range']::-moz-range-track {
+  height: calc(var(--g) * 18);
+  background: transparent;
+}
+.mc-slider input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: calc(var(--g) * 8);
+  height: calc(var(--g) * 18);
+  border: 0;
+  border-radius: 0;
+  background: var(--mc-stone) left / calc(var(--g) * 200) 100% no-repeat;
+  box-shadow: 0 0 0 var(--g) #000;
+}
+.mc-slider input[type='range']::-moz-range-thumb {
+  width: calc(var(--g) * 8);
+  height: calc(var(--g) * 18);
+  border: 0;
+  border-radius: 0;
+  background: var(--mc-stone) left / calc(var(--g) * 200) 100% no-repeat;
+  box-shadow: 0 0 0 var(--g) #000;
+}
+.mc-slider:hover input[type='range']::-webkit-slider-thumb {
+  background-image: var(--mc-stone-hover);
+  box-shadow: 0 0 0 var(--g) #fff;
+}
+.mc-slider span {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: var(--g);
+  pointer-events: none;
+  color: #e0e0e0;
+  text-shadow: var(--g) var(--g) 0 #383838;
+  white-space: nowrap;
+}
+.mc-slider:hover span {
+  color: #ffffa0;
+}
+.mc-menu .mc-button { position: relative; }
