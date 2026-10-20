@@ -402,11 +402,19 @@ export class Runtime {
             location.assign(to);
           });
         if (!(err instanceof Refused) || !err.retry) throw err;
-        // No multiplayer server running: the page says so (and who to ask), and tries again only when the player
-        // clicks Multiplayer; singleplayer stays a click away.
+        // No multiplayer server running: the page says so (and who to ask), and goes back to playing alone right
+        // here, the world loading behind the message, so Singleplayer is one click in (no reload, which would want
+        // a second). Multiplayer stays on offer: clicking it is the one way to try the server again.
         const down = Runtime.multiplayerDown;
-        if (mode === 'multi' && err.unreachable && down && title.unavailable) {
-          await title.unavailable(down.text, down.email);
+        if (mode === 'multi' && err.unreachable && down && Runtime.local) {
+          try {
+            sessionStorage.setItem('marm.mode', 'single');
+          } catch {
+            // (Not remembered: the default, singleplayer, anyway.)
+          }
+          title.modes?.('single', () => Runtime.switchMode('multi'));
+          title.unavailable?.(down.text, down.email);
+          link = await Runtime.local();
           continue;
         }
         const next = await title.busy(err.message, wait);

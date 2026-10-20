@@ -71,11 +71,8 @@ export interface HomeScreen {
   present(names: string[]): void;
   failed(text: string, onPick: (id: string) => void): void;
   busy(text: string, seconds: number): Promise<string | null>;
-  /**
-   * No server to play on (multiplayer): say so and who to ask; the other way in (singleplayer) stays offered.
-   * Resolves when the player clicks to try again.
-   */
-  unavailable?(text: string, email?: string): Promise<void>;
+  /** No server to play on (multiplayer): say so, and who to ask (`email`, in the text, shown as a link). */
+  unavailable?(text: string, email?: string): void;
   hide(): void;
   name(): string;
   avatar(): string;
@@ -396,6 +393,8 @@ export class TitleScreen implements HomeScreen {
     this.kicker.replaceChildren();
     this.status.replaceChildren();
     this.status.classList.remove('error');
+    // (Said before the world came in, it stays said: no multiplayer server, while singleplayer loads.)
+    if (this.notice) this.unavailable(this.notice.text, this.notice.email);
     for (const [gid, card] of this.cards) {
       const on = gid === id;
       card.el.classList.toggle('current', on);
@@ -516,12 +515,6 @@ export class TitleScreen implements HomeScreen {
   }
 
   private async play() {
-    // (No server came: this click is the try again, with no world loaded yet.)
-    if (this.retry) {
-      const retry = this.retry;
-      this.retry = null;
-      return retry();
-    }
     if (!this.ready || !this.game) return;
     const me = this.account.me;
     const typed = this.nameInput.value.trim();
@@ -682,37 +675,25 @@ export class TitleScreen implements HomeScreen {
     });
   }
 
-  unavailable(text: string, email?: string): Promise<void> {
-    // (Its button stays: clicking it tries again, then and only then.)
-    this.button.disabled = false;
-    this.fill.style.width = '0%';
-    this.label.textContent = this.playWord;
+  /** What `unavailable` said, kept up until play starts. */
+  private notice: { text: string; email?: string } | null = null;
+
+  unavailable(text: string, email?: string) {
+    this.notice = { text, email };
     // (An error: the player count the page polls for doesn't write over it.)
     this.status.classList.add('error');
     const at = email ? text.indexOf(email) : -1;
     // (One run of text: the status line is a flex row, which would space the link off from the words round it.)
     const parts = at >= 0 && email ? [text.slice(0, at), h('a.home-status-link', { href: `mailto:${email}` }, email), text.slice(at + email.length)] : [text];
     this.status.replaceChildren(h('span', {}, ...parts));
-    // (The other way in, singleplayer, is still there to take.)
-    this.switcher?.classList.remove('hidden');
-    return new Promise((done) => {
-      this.retry = () => {
-        this.status.classList.remove('error');
-        this.status.replaceChildren();
-        this.switcher?.classList.add('hidden');
-        this.loading('Connecting…');
-        done();
-      };
-    });
   }
-
-  /** While no server came (`unavailable`): what the Play button does instead, try again. */
-  private retry: (() => void) | null = null;
 
   /** Playing: the page fades away (it comes back with `show`). */
   hide() {
     window.clearInterval(this.poll);
     this.root.classList.add('hidden');
+    // (In the game now: back at the title later, there's no need to say it again.)
+    this.notice = null;
   }
 }
 
