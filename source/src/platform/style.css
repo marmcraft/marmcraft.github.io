@@ -404,6 +404,11 @@ body.framed #ui .home .home-play {
 .home-status.error {
   color: #ff9a8f;
 }
+.home-status-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .home-actions {
   display: flex;
   align-items: stretch;

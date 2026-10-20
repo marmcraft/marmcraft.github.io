@@ -4,7 +4,7 @@ import { Runtime } from './platform/runtime';
 import { FrameHost } from './platform/ui/frame-host';
 import { reportErrors } from './platform/client/errors';
 import { devGames, games } from './games/browser';
-import { MULTIPLAYER_SERVER } from './server-settings';
+import { MULTIPLAYER_CONTACT, MULTIPLAYER_SERVER } from './server-settings';
 
 const canvas = document.getElementById('view') as HTMLCanvasElement;
 const ui = document.getElementById('ui') as HTMLElement;
@@ -26,6 +26,10 @@ Runtime.frames = (o) => frames.start(o);
 // (in development, the one `npm run dev` runs).
 Runtime.local = () => import('./singleplayer').then((m) => m.singleplayer());
 if (!import.meta.env.DEV) Runtime.multiplayer = MULTIPLAYER_SERVER;
+Runtime.multiplayerDown = {
+  text: `There's no multiplayer server running at the moment. Email ${MULTIPLAYER_CONTACT} to put it up.`,
+  email: MULTIPLAYER_CONTACT,
+};
 
 // The catalog: each game's meta, and its client code loaded when it's picked. Development games
 // open by id (`?game=gallery`) and aren't in a production build at all.

@@ -402,6 +402,13 @@ export class Runtime {
             location.assign(to);
           });
         if (!(err instanceof Refused) || !err.retry) throw err;
+        // No multiplayer server running: the page says so (and who to ask), and tries again only when the player
+        // clicks Multiplayer; singleplayer stays a click away.
+        const down = Runtime.multiplayerDown;
+        if (mode === 'multi' && err.unreachable && down && title.unavailable) {
+          await title.unavailable(down.text, down.email);
+          continue;
+        }
         const next = await title.busy(err.message, wait);
         const entry = next === null ? null : find(next);
         if (!entry) {
@@ -473,6 +480,12 @@ export class Runtime {
 
   /** Multiplayer's server (the site's settings, src/server-settings.ts), over the build's and development's. */
   static multiplayer: string | null = null;
+
+  /**
+   * What the home page says when nobody answers at the multiplayer server (it isn't running): the text, and an
+   * address in it to write to (shown as a link). Null: the usual "can't reach", counting down to the next try.
+   */
+  static multiplayerDown: { text: string; email?: string } | null = null;
 
   /** How this page plays: alone (the default, where it can) or on the multiplayer server, as last picked. */
   static mode(): 'single' | 'multi' {

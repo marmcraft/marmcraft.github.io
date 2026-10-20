@@ -71,6 +71,11 @@ export interface HomeScreen {
   present(names: string[]): void;
   failed(text: string, onPick: (id: string) => void): void;
   busy(text: string, seconds: number): Promise<string | null>;
+  /**
+   * No server to play on (multiplayer): say so and who to ask; the other way in (singleplayer) stays offered.
+   * Resolves when the player clicks to try again.
+   */
+  unavailable?(text: string, email?: string): Promise<void>;
   hide(): void;
   name(): string;
   avatar(): string;
@@ -511,6 +516,12 @@ export class TitleScreen implements HomeScreen {
   }
 
   private async play() {
+    // (No server came: this click is the try again, with no world loaded yet.)
+    if (this.retry) {
+      const retry = this.retry;
+      this.retry = null;
+      return retry();
+    }
     if (!this.ready || !this.game) return;
     const me = this.account.me;
     const typed = this.nameInput.value.trim();
@@ -670,6 +681,33 @@ export class TitleScreen implements HomeScreen {
       };
     });
   }
+
+  unavailable(text: string, email?: string): Promise<void> {
+    // (Its button stays: clicking it tries again, then and only then.)
+    this.button.disabled = false;
+    this.fill.style.width = '0%';
+    this.label.textContent = this.playWord;
+    // (An error: the player count the page polls for doesn't write over it.)
+    this.status.classList.add('error');
+    const at = email ? text.indexOf(email) : -1;
+    // (One run of text: the status line is a flex row, which would space the link off from the words round it.)
+    const parts = at >= 0 && email ? [text.slice(0, at), h('a.home-status-link', { href: `mailto:${email}` }, email), text.slice(at + email.length)] : [text];
+    this.status.replaceChildren(h('span', {}, ...parts));
+    // (The other way in, singleplayer, is still there to take.)
+    this.switcher?.classList.remove('hidden');
+    return new Promise((done) => {
+      this.retry = () => {
+        this.status.classList.remove('error');
+        this.status.replaceChildren();
+        this.switcher?.classList.add('hidden');
+        this.loading('Connecting…');
+        done();
+      };
+    });
+  }
+
+  /** While no server came (`unavailable`): what the Play button does instead, try again. */
+  private retry: (() => void) | null = null;
 
   /** Playing: the page fades away (it comes back with `show`). */
   hide() {

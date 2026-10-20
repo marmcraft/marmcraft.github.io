@@ -11,6 +11,8 @@ export class Refused extends Error {
   constructor(
     message: string,
     readonly code: number,
+    /** Nothing answered: no server there (or no way to it), rather than one that turned us away. */
+    readonly unreachable = false,
   ) {
     super(message);
   }
@@ -69,7 +71,7 @@ export class SocketLink implements Link {
       // Turned away (full, too many connections) or unreachable: the server's reason, if it gave one.
       ws.onclose = (e: CloseEvent) => {
         if (link) link.onClose?.();
-        else reject(new Refused(e.reason || `Can't reach the game server at ${url}`, e.code));
+        else reject(new Refused(e.reason || `Can't reach the game server at ${url}`, e.code, !e.reason));
       };
     });
   }

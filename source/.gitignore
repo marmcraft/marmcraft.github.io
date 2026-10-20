@@ -9,3 +9,9 @@ dist-server
 .vercel
 .env*
 dist-sandbox
+
+# The agent's Python environment and caches
+agent/.venv/
+__pycache__/
+agent/.env
+agent/media/*.webm

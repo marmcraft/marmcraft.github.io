@@ -10,3 +10,6 @@
  * Singleplayer needs none of this: it runs in the page.
  */
 export const MULTIPLAYER_SERVER = 'wss://drug-effectively-nearly-rotary.trycloudflare.com';
+
+/** Who to ask when it isn't running: the home page says so, with this address to write to. */
+export const MULTIPLAYER_CONTACT = 'end@mit.edu';

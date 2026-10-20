@@ -569,8 +569,15 @@ export class GameHost {
         frame,
       });
     }
+    this.onStep?.(out);
     return out;
   }
+
+  /**
+   * Every step's batches, every client's, as `step` hands them out (whoever's driving the host: a test's, or an
+   * agent environment's single local player, can pass the others on to screens watching).
+   */
+  onStep: ((batches: Map<string, HostBatch>) => void) | null = null;
 
   /**
    * This step's frame, rounded and patched once (`frames`), and kept with what was shown in the
