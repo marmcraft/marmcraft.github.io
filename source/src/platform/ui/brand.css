@@ -175,3 +175,7 @@
   align-items: center;
   gap: 6px;
 }
+/* (The other way in, put away while the world loads.) */
+.home-play.home-mode.hidden {
+  display: none;
+}

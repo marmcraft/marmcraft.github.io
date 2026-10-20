@@ -616,6 +616,8 @@ export class TitleScreen implements HomeScreen {
     // (Once: the title screen is kept when the game starts again, quitting to it, and asked again.)
     this.switcher?.remove();
     const switcher = (this.switcher = h('button.home-play.home-mode', { onclick: other }, h('span.home-play-label', {}, word(current === 'single' ? 'multi' : 'single'))));
+    // (Not while the world loads: only the way in that's loading shows, with its progress.)
+    switcher.classList.toggle('hidden', !this.ready);
     // (Singleplayer first, Multiplayer under it, whichever this page plays.)
     if (current === 'single') this.button.after(switcher);
     else this.button.before(switcher);
@@ -628,6 +630,7 @@ export class TitleScreen implements HomeScreen {
     this.button.disabled = false;
     this.fill.style.width = '100%';
     this.label.textContent = this.playWord;
+    this.switcher?.classList.remove('hidden');
     this.root.classList.add('ready');
   }
 
