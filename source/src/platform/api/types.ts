@@ -1665,6 +1665,11 @@ export interface Container {
   progress?: Record<string, number>;
   /** Whether a stack may go into a slot of its own (default: any but an output). */
   accepts?(slot: number, stack: ItemStack): boolean;
+  /**
+   * Where a quick move (shift-click) from what they carry goes in it: a slot of its own, or null for none (the stack
+   * goes across, hotbar to the rest and back). Default: any slot that accepts it.
+   */
+  quick?(stack: ItemStack): number | null;
   /** A stack was taken out of an output slot (a craft): use up what made it. */
   taken?(slot: number, stack: ItemStack): void;
   /** Its slots changed (a stack moved in or out): work out the result again. */

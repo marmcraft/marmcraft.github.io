@@ -108,6 +108,90 @@ const TOOLS: Record<string, string[]> = {
   ],
 };
 
+/** Armour's shapes, a piece each (Minecraft's): H light, h dark, D the outline. */
+const ARMOUR: Record<string, string[]> = {
+  helmet: [
+    '................',
+    '................',
+    '................',
+    '....DDDDDDDD....',
+    '...DHHHHHHHHD...',
+    '..DHHhhhhhhHHD..',
+    '..DHh......hHD..',
+    '..DHh......hHD..',
+    '..DHD......DHD..',
+    '..DDD......DDD..',
+    '................',
+    '................',
+    '................',
+    '................',
+    '................',
+    '................',
+  ],
+  chestplate: [
+    '................',
+    '..DDDD....DDDD..',
+    '.DHHHHD..DHHHHD.',
+    '.DHhHHHDDHHHhHD.',
+    '.DHhHHHHHHHHhHD.',
+    '.DDDHHHHHHHHDDD.',
+    '...DHHHHHHHHD...',
+    '...DHhHHHHhHD...',
+    '...DHHHHHHHHD...',
+    '...DHhHHHHhHD...',
+    '...DHHHHHHHHD...',
+    '...DhhhhhhhhD...',
+    '...DDDDDDDDDD...',
+    '................',
+    '................',
+    '................',
+  ],
+  leggings: [
+    '................',
+    '...DDDDDDDDDD...',
+    '...DHHHHHHHHD...',
+    '...DhhhhhhhhD...',
+    '...DHHHDDHHHD...',
+    '...DHHD..DHHD...',
+    '...DHhD..DhHD...',
+    '...DHHD..DHHD...',
+    '...DHhD..DhHD...',
+    '...DHHD..DHHD...',
+    '...DHhD..DhHD...',
+    '...DHHD..DHHD...',
+    '...DDDD..DDDD...',
+    '................',
+    '................',
+    '................',
+  ],
+  boots: [
+    '................',
+    '................',
+    '................',
+    '................',
+    '................',
+    '..DDDD....DDDD..',
+    '..DHHD....DHHD..',
+    '..DHhD....DhHD..',
+    '..DHHD....DHHD..',
+    '.DHHhD....DhHHD.',
+    '.DHHHD....DHHHD.',
+    '.DDDDD....DDDDD.',
+    '................',
+    '................',
+    '................',
+    '................',
+  ],
+};
+/** Each armour material's light and dark (and outline). */
+export const ARMOUR_COLOURS: Record<string, [string, string, string]> = {
+  leather: ['#a0603a', '#6b3c22', '#2e180c'],
+  golden: ['#fbe46a', '#c9a11c', '#5a3f05'],
+  iron: ['#e6e6e6', '#9a9a9a', '#3a3a3a'],
+  diamond: ['#7af0e2', '#1d9a90', '#0b3d3a'],
+};
+export const ARMOUR_PIECES = ['helmet', 'chestplate', 'leggings', 'boots'] as const;
+
 /** The other items' shapes: A light, B mid, C dark, D the darkest (an outline), E what's in it (a bucket's water). */
 const SHAPES: Record<string, string[]> = {
   stick: [
@@ -329,7 +413,8 @@ const SHAPES: Record<string, string[]> = {
 };
 
 /** Each item's picture: a tool (its kind and material) or a shape in its colours (light, mid, dark, outline). */
-export const ITEM_ART: Record<string, { tool: string; material: string } | { shape: string; colours: [string, string, string, string, string?] }> = {
+export const ITEM_ART: Record<string, { tool: string; material: string } | { armour: string; material: string } | { shape: string; colours: [string, string, string, string, string?] }> = {
+  leather: { shape: 'shard', colours: ['#c07a4a', '#8a5030', '#5a3018', '#2a140a'] },
   stick: { shape: 'stick', colours: ['#a07a46', '#6b4f2a', '#6b4f2a', '#3a2a14'] },
   coal: { shape: 'lump', colours: ['#4a4a4a', '#2a2a2a', '#151515', '#050505'] },
   charcoal: { shape: 'lump', colours: ['#5a4632', '#3a2b1d', '#22180f', '#0d0905'] },
@@ -364,6 +449,7 @@ export const ITEM_ART: Record<string, { tool: string; material: string } | { sha
   apple: { shape: 'apple', colours: ['#ff8a7a', '#d81e1e', '#8a0c0c', '#3a0505'] },
 };
 for (const tool of Object.keys(TOOLS)) for (const material of Object.keys(MATERIAL_COLOURS)) ITEM_ART[`${material}_${tool}`] = { tool, material };
+for (const piece of ARMOUR_PIECES) for (const material of Object.keys(ARMOUR_COLOURS)) ITEM_ART[`${material}_${piece}`] = { armour: piece, material };
 
 const hex = (c: string): [number, number, number] => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
 
@@ -385,6 +471,10 @@ export function paintItems(): { width: number; height: number; pixels: Uint8Arra
       rows = TOOLS[art.tool];
       const [hl, hd] = MATERIAL_COLOURS[art.material];
       palette = { H: hl, h: hd, S: STICK[0], s: STICK[1] };
+    } else if ('armour' in art) {
+      rows = ARMOUR[art.armour];
+      const [hl, hd, d] = ARMOUR_COLOURS[art.material];
+      palette = { H: hl, h: hd, D: d };
     } else {
       rows = SHAPES[art.shape];
       const [a, b, c, d, e] = art.colours;

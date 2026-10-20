@@ -543,7 +543,10 @@ export class PlayerSim {
         return;
       }
       const targets: number[] = [];
-      if (c) for (let i = 0; i < c.slots.length; i++) if (!isOut(100 + i) && accepts(100 + i, a)) targets.push(100 + i);
+      if (c?.quick) {
+        const q = c.quick(a);
+        if (q !== null && !isOut(100 + q) && accepts(100 + q, a) && (!c.slots[q] || c.slots[q]!.item === a.item)) targets.push(100 + q);
+      } else if (c) for (let i = 0; i < c.slots.length; i++) if (!isOut(100 + i) && accepts(100 + i, a)) targets.push(100 + i);
       const bar = inv.bar || inv.slots.length;
       const across = from < bar ? Array.from({ length: inv.slots.length - bar }, (_, i) => bar + i) : Array.from({ length: bar }, (_, i) => i);
       for (const t of [...targets.filter((t) => this.slotAt(t)?.item === a.item), ...targets.filter((t) => !this.slotAt(t)), ...(targets.length ? [] : across)]) {
@@ -639,7 +642,8 @@ export class PlayerSim {
       ...(this.itemMode && { items: this.items.own() }),
       camera: { p: [p.x, p.y, p.z], q: [q.x, q.y, q.z, q.w], fov: this.cam.fov, follow: this.followVehicle && !!this.vehicle },
       vehicle: this.vehicle && { name: this.vehicle.name, state: this.vehicle.state, prop: this.vehicle.prop && !this.vehicle.prop.removed ? this.vehicle.prop.id : null, ...(this.vehicle.remote ? { remote: true } : {}) },
-      creative: this.creative && this.creativeRules ? { hotbar: [...this.creative.hotbar], selected: this.creative.selected } : null,
+      // (In creative: a builder by blocks, their hotbar of them; one by items, an empty one: what they carry's in `hotbar`.)
+      creative: this.creativeRules && this.p.options.build ? { hotbar: this.creative ? [...this.creative.hotbar] : [], selected: this.creative?.selected ?? this.inventory.selected } : null,
       frozen: s.frozen,
       ...(this.spectating && { spectating: true }),
       locked: this.weaponsLocked,

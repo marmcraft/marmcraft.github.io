@@ -482,6 +482,13 @@ export class Sim {
   /** Something a player did on their client (menus, callbacks, the block picker, the game's own messages). */
   receive(m: ClientMessage) {
     if (m.t === 'creativePick') this.players.find((p) => p.id === m.player)?.creative?.pick(m.block, m.slot, m.fromSlot);
+    else if (m.t === 'creativeGive') {
+      // Creative, playing by items: any item, a whole stack of it (or the slot emptied).
+      const p = this.players.find((x) => x.id === m.player && !x.vacant);
+      if (!p || !p.itemMode || !p.creativeRules || m.slot >= p.inventory.slots.length) return;
+      if (m.item === null) p.inventory.set(m.slot, null);
+      else if (this.items.get(m.item)) p.inventory.set(m.slot, { item: m.item, count: p.inventory.most(m.item) });
+    }
     else if (m.t === 'inventoryMove' || m.t === 'inventoryToss' || m.t === 'inventoryOpen' || m.t === 'inventoryClose') {
       // Their inventory screen: stacks moved (theirs, their container's), thrown out, the screen opened or shut.
       const p = this.players.find((x) => x.id === m.player && !x.vacant);
@@ -661,7 +668,8 @@ export class Sim {
       achieve: (who, a) => this.achieve(who, a),
       grant: (who, c) => this.grant(who, c),
     });
-    if (this.def.player?.build)
+    // (A builder by blocks: creative's own hotbar of them. One playing by items builds with what they carry.)
+    if (this.def.player?.build && this.def.player.hotbar !== 'items')
       p.creative = new CreativeBuild(
         this.host.world,
         this.registry,

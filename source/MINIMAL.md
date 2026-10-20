@@ -157,6 +157,50 @@ fork. Everything else from mconline was left out on purpose.
   - Through the portal you go at once onto a fresh 5×5 obsidian platform at (−99,900, 49, 0). The exit
     portal takes you back to the spawn. Reaching the bottom of the End kills you.
   - The screen there: a dark purple void and dim, even light (`Environment.end`).
+- **MARM only.** Every other game is gone, along with the tests that played them (about 90 files). The
+  page has no `?game=` and doesn't write one. "Blockyard" is renamed to MARM throughout, the package
+  included.
+- **Singleplayer and Multiplayer** on the title screen. The one picked plays; the other reloads into
+  itself (remembered in `sessionStorage`).
+  - Singleplayer runs the host in the page (`src/singleplayer.ts`, after mconline's `LocalLink`). The world
+    is kept in localStorage (`marm.single.*`), saved every 10 s and when the page goes.
+  - Multiplayer connects to `MULTIPLAYER_SERVER` in `src/server-settings.ts`. `npm run multiplayer --
+    --write` starts the server on port 8798 and a Cloudflare quick tunnel in front of it, and writes the
+    tunnel's address into the settings.
+  - The boundary and bundle checks let `src/singleplayer.ts` alone reach the host.
+- **Saves in the browser** (`addons/saves.ts` and `client.ts`): every 5 s the server sends each player
+  their mode, inventory (with wear) and position. Their screen keeps it in localStorage (`marm.save.single`
+  or `.multi`) and sends it back when they join, once, within 15 s.
+- **Night mobs** (`survival/mobs.ts`), skins painted in code:
+  - zombies hit, skeletons shoot arrows, spiders pounce, and creepers hiss and blow up (breaking blocks);
+  - they spawn 24–44 blocks from survival players after dark, up to 10 each, never in the Nether or End,
+    and ignore creative players and spectators;
+  - zombies and skeletons burn in daylight; anything 96 blocks from everyone despawns;
+  - drops: rotten flesh, bones, string, gunpowder.
+- Spawn in a forest (the engine's spawn search tries well inside a forest first). Survival is the default
+  mode. Dropped items have no glow under them. The Disconnected screen is the title screen again, with
+  Reconnect.
+- Data over a tunnel: 96 skins sent (1024×384), not the whole sheet, and a crowd of 600 bots (48 drawn).
+- Published at https://marmcraft.github.io (repository marmcraft/marmcraft.github.io: the built site at
+  its root, this source under `source/`, one commit).
+- **Items in every mode, armour, weapons, cows** (vanilla Minecraft's, Mineclonia's numbers; nothing from mconline's
+  fantasy packs):
+  - Sandbox plays by items in creative too (`player.hotbar: 'items'`).
+    - The creative inventory lists every item: blocks in the block tabs, and the rest in Minecraft's Tools &
+      Utilities, Combat and Ingredients tabs, in Minecraft's order.
+    - Picking an item gives a whole stack (`creativeGive`). Creative breaks at a touch and doesn't use up what
+      it places.
+    - What you carry stays the same across modes, as in Minecraft.
+  - Armour: leather, gold, iron and diamond (helmet, chestplate, leggings, boots) with Minecraft's points,
+    durability and recipes.
+    - It's worn in the survival inventory's four armour slots, laid out as Minecraft's: the slots down the left,
+      the figure, the 2×2 grid and its result. Shift-click puts it on.
+    - Hits wear it; falls and the world's harm aren't softened by it.
+    - It shows on the player's figure, painted in Minecraft's armour layout.
+  - Tools are weapons, with Minecraft's damage and attack speed (the platform's melee kit): swords sweep, and the
+    bare hand does 1. A hit wears a sword by 1 and other tools by 2.
+  - Cows graze by day round survival players and drop leather.
+  - The title's Singleplayer/Multiplayer switcher no longer appears twice after Save and Quit to Title.
 - Platform pieces for survival: `inventory.setCapacity`, `move` and `giveStack`; tool `wear` on stacks; `Container` (`player.openContainer`) with `inventoryMove/Toss/Open/Close` messages; and the building kit's `who` filter.
 
 Left out of these on purpose: mconline's Minecraft font (Mojang's glyphs, not cleared to publish) and
@@ -181,9 +225,7 @@ Open `/?game=sandbox`.
 ## Checks run (2026-10-19, Node 22.14, Windows)
 
 - `tsc --noEmit`, `check:boundaries`, `vite build`, `check:bundle`: pass.
-- Headless tests: 98 of 99 pass (`gamemodes.ts`, `wideids.ts`, `survival.ts`, `liquids.ts`, `nether.ts` and `end.ts` are new). `public.ts` once timed out waiting for Sandbox to start under a full run's load; it passes alone. `generated.ts` now loads Sandbox's own blocks, since its Nether is made of them. `split.ts` fails on Arena's own imports because its path check
-  expects `/` separators; Arena and the test were unchanged from the starting platform, so this is a Windows
-  issue, not from these changes.
+- Headless tests: all 36 pass, `split.ts` included (it failed on another game's files before). New: `gamemodes.ts`, `wideids.ts`, `survival.ts`, `liquids.ts`, `nether.ts`, `end.ts` and `mobs.ts`. `generated.ts` loads Sandbox's own blocks, since its Nether is made of them.
 - `tests/headless/public.ts`: its two Sandbox joins now wait 2 s instead of 0.4 s. Sandbox takes
   about 1.1 s to start (skins 0.13 s, the crowd 0.5 s); Bed Wars about 0.12 s.
 - `tests/headless/sandbox.ts` now checks the empty hotbar (36 empty slots, nothing placed from an

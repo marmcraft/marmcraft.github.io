@@ -29,7 +29,8 @@ export const shared = defineShared({
     end: { x: END_X, middle: END_MIDDLE, portal: 'end_portal' },
     structures: STRONGHOLDS.map(strongholdRoom),
   },
-  player: { build: true, fly: true, health: false, hotbar: 'blocks' },
+  // (Played by items in every mode, as Minecraft is: the creative inventory gives whole stacks of anything.)
+  player: { build: true, fly: true, health: false, hotbar: 'items' },
   // Mineclonia's hotbar and first-person hand in play.
   hud: { style: 'mineclonia' },
   // A few blocks of its own, in the block picker with the built-in ones: a crate painted as a

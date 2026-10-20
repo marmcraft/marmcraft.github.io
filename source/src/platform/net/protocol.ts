@@ -79,6 +79,8 @@ export type ClientMessage =
   | { t: 'inventoryMove'; player: string; from: number; to: number; count?: number }
   /** A stack thrown out of their inventory screen (dropped outside it): `count` of it, or all. */
   | { t: 'inventoryToss'; player: string; from: number; count?: number }
+  /** In creative, a game that plays by items: a whole stack of an item into a slot (null: the slot emptied). */
+  | { t: 'creativeGive'; player: string; item: string | null; slot: number }
   /** Their inventory screen opened, or shut. */
   | { t: 'inventoryOpen'; player: string }
   | { t: 'inventoryClose'; player: string };

@@ -1,4 +1,5 @@
 import { defineServer, vec } from '@platform';
+import { melee } from '@platform/kits';
 import { installAddons } from './addons';
 import { shared } from './shared';
 
@@ -14,6 +15,8 @@ const addons = new WeakMap<object, (dt: number) => void>();
  * for building and getting about.
  */
 export default defineServer(shared, {
+  // (Swords and tools hit as Minecraft's do, the bare hand for 1: survival/items.ts.)
+  items: [melee()],
   setup(game) {
     // The add-ons: skins for everyone, and a crowd of bots (`addons/index.ts`).
     addons.set(game, installAddons(game));

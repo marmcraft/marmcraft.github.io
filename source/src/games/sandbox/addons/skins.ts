@@ -1,5 +1,6 @@
 import { Models, type GameContext, type ModelPart, type ModelSpec, type Player } from '@platform';
 import { SKINS } from './skins.data';
+import { ARMOUR_COLOURS } from '../survival/art.shared';
 
 /**
  * Skins: an add-on that gives everyone a Minecraft-style body, a box figure in a skin, in place of
@@ -66,8 +67,10 @@ export function figures(game: GameContext, atlas: string, sheet: SkinSheet, slim
  * A sheet's skins as an atlas, and a figure in each. `glows`: texels of some of them (by their place in the sheet; x, y in the
  * skin) that are alight, as a creature's eyes are (roadfolk, Sean 2026-10-15: a pack's alpha, its eyes lit in its skin).
  */
-function unpack(game: GameContext, ATLAS: string, sheet: SkinSheet, glows?: ReadonlyMap<number, readonly (readonly [number, number])[]>) {
-  const { count, columns, width, height } = sheet;
+function unpack(game: GameContext, ATLAS: string, sheet: SkinSheet, glows?: ReadonlyMap<number, readonly (readonly [number, number])[]>, below?: { height: number; paint(pixels: Uint8Array, width: number, y0: number): void }) {
+  const { count, columns, width } = sheet;
+  // (Room under the skins for what's painted there: armour's.)
+  const height = sheet.height + (below?.height ?? 0);
 
   // The skins, side by side: unpacked from runs of one colour (count, r, g, b, a).
   const runs = Uint8Array.from(atob(sheet.runs), (c) => c.charCodeAt(0));
@@ -84,6 +87,7 @@ function unpack(game: GameContext, ATLAS: string, sheet: SkinSheet, glows?: Read
       for (const [x, y] of texels) emissive[(oy + y) * width + ox + x] = 255;
     }
   }
+  below?.paint(pixels, width, sheet.height);
   game.items.atlas(ATLAS, { width, height, pixels, ...(emissive && { emissive }) });
 
   /** A box figure in a skin, laid out the new way: its left arm and leg have places of their own, and each part its second layer. */
@@ -131,10 +135,88 @@ function firstOf(sheet: SkinSheet, most: number): SkinSheet {
   return { ...sheet, count: Math.min(most, rows * sheet.columns), height, runs: btoa(text) };
 }
 
+// -------------------------------------------------------------------------------------------- armour
+
+/** The armour materials, in their order under the skins: each a 128-wide strip (its two layers, 64 × 32 each). */
+const ARMOUR_MATERIALS = Object.keys(ARMOUR_COLOURS);
+
+/**
+ * Paint each material's armour in Minecraft's armour layout (layer 1: helmet, chestplate, boots; layer 2: leggings)
+ * under the skins, at `y0`: the material's colour, darker at the edges, a little grain.
+ */
+function paintArmour(pixels: Uint8Array, width: number, y0: number) {
+  ARMOUR_MATERIALS.forEach((material, m) => {
+    const [light, dark, line] = ARMOUR_COLOURS[material].map((c) => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]);
+    const put = (layer: number, x: number, y: number, edge = false) => {
+      const grain = ((x * 7 + y * 13) % 5) / 40;
+      const c = edge ? dark : light;
+      const o = ((y0 + y) * width + m * 128 + layer * 64 + x) * 4;
+      for (let k = 0; k < 3; k++) pixels[o + k] = Math.min(255, c[k] * (1 - grain));
+      pixels[o + 3] = 255;
+    };
+    const box = (layer: number, x0: number, y0b: number, w: number, h: number, keep: (x: number, y: number) => boolean) => {
+      for (let y = y0b; y < y0b + h; y++) for (let x = x0; x < x0 + w; x++) if (keep(x, y)) put(layer, x, y, x === x0 || y === y0b || x === x0 + w - 1 || y === y0b + h - 1);
+    };
+    // Layer 1. The helmet (head, 0,0): all round, its front open for the eyes.
+    box(0, 0, 0, 32, 16, (x, y) => !(y >= 8 && x >= 8 && x < 16 && y >= 11 && x > 8 && x < 15) && !(y >= 8 && (x < 8 || (x >= 16 && x < 24)) && y >= 14));
+    // The chestplate: the body (16,16) whole, the arms (40,16) to the elbow.
+    box(0, 16, 16, 24, 16, () => true);
+    box(0, 40, 16, 16, 16, (_x, y) => y < 25);
+    // Boots: the legs (0,16), their lowest rows and soles.
+    box(0, 0, 16, 16, 16, (x, y) => y >= 27 || (y < 20 && x >= 8 && x < 12));
+    // Layer 2. Leggings: the body's waist (16,16, its lowest rows) and the legs (0,16) from the hips to the boots.
+    box(1, 16, 16, 24, 16, (x, y) => y >= 27 || (y < 20 && x >= 28 && x < 36));
+    box(1, 0, 16, 16, 16, (x, y) => (y >= 20 && y < 28) || (y < 20 && x >= 4 && x < 8));
+    // (The outline's colour on the helmet's rim.)
+    for (let x = 0; x < 32; x++) {
+      const o = ((y0 + 15) * width + m * 128 + x) * 4;
+      if (pixels[o + 3]) [pixels[o], pixels[o + 1], pixels[o + 2]] = line;
+    }
+  });
+}
+
+/** What a player wears: each piece's material (helmet, chestplate, leggings, boots), or null. */
+export type Worn = readonly (string | null)[];
+const wornOf = new WeakMap<GameContext, Map<string, Worn>>();
+
+/** Put armour on a player's figure (or take it off: all null): their figure's made over with it. */
+export function wearArmour(game: GameContext, player: Player, worn: Worn) {
+  const all = wornOf.get(game);
+  if (!all) return;
+  const was = all.get(player.id);
+  if (was && was.join() === worn.join()) return;
+  all.set(player.id, [...worn]);
+  redress(game, player);
+}
+
+/** The boxes armour adds over a figure's parts (Minecraft's: the helmet, chest and boots 1 texel out; leggings ½). */
+function armourParts(base: readonly ModelPart[], worn: Worn, y0: number): ModelPart[] {
+  const out: ModelPart[] = [];
+  const UV: Record<string, [number, number]> = { head: [0, 0], body: [16, 16], armR: [40, 16], armL: [40, 16], legR: [0, 16], legL: [0, 16] };
+  const piece = (k: number, layer: number, parts: string[], inflate: number) => {
+    const material = worn[k];
+    const m = material ? ARMOUR_MATERIALS.indexOf(material) : -1;
+    if (m < 0) return;
+    for (const name of parts) {
+      const p = base.find((q) => q.name === name);
+      if (!p) continue;
+      const [u, v] = UV[name];
+      out.push({ name: `${name}Armour${k}`, parent: name, size: [...p.size], uv: [m * 128 + layer * 64 + u, y0 + v], pivot: [0, 0, 0], offset: [...p.offset], inflate, ...(name.endsWith('L') && { mirror: true }) } as ModelPart);
+    }
+  };
+  piece(0, 0, ['head'], 1);
+  piece(1, 0, ['body', 'armR', 'armL'], 1);
+  piece(2, 1, ['body', 'legR', 'legL'], 0.5);
+  piece(3, 0, ['legR', 'legL'], 1);
+  return out;
+}
+
 export function skins(game: GameContext): Skins {
   const sheet = firstOf(SKINS, MOST_SKINS);
   const { count } = sheet;
-  const { origin, models } = unpack(game, ATLAS, sheet);
+  const { origin, models } = unpack(game, ATLAS, sheet, undefined, { height: 32, paint: paintArmour });
+  const armourAt = sheet.height;
+  wornOf.set(game, new Map());
   /**
    * The same figure with slim arms (Minecraft's "Alex" build: three texels across, not four, each
    * arm keeping its inner side where it was), for under what's cut to fit that build. Made the
@@ -158,7 +240,10 @@ export function skins(game: GameContext): Skins {
     const k = ((Math.floor(skin) % count) + count) % count;
     player.store.set('skin', k);
     const fit = fits.get(game)?.get(player.id);
-    player.setModel(fit ? fittedModel(k, fit) : models[k]);
+    const body = fit ? fittedModel(k, fit) : models[k];
+    // (What armour they wear, over it.)
+    const worn = wornOf.get(game)?.get(player.id);
+    player.setModel(worn && worn.some(Boolean) ? { ...body, parts: [...body.parts, ...armourParts(body.parts, worn, armourAt)] } : body);
     // (Their first-person hand wears it too.)
     player.setSkin(origin(k), ATLAS);
   }
@@ -176,7 +261,7 @@ export function skins(game: GameContext): Skins {
   // (For whoever undresses them, a creature's shape put off: `redress`.)
   dressers.set(game, dress);
   game.events.on('playerJoin', ({ player }) => dress(player));
-  game.events.on('playerLeave', ({ player }) => fits.get(game)?.delete(player.id));
+  game.events.on('playerLeave', ({ player }) => (fits.get(game)?.delete(player.id), wornOf.get(game)?.delete(player.id)));
   game.events.on('playerReady', ({ player }) => dress(player));
 
   game.commands.register('skin', {

@@ -93,7 +93,7 @@ export default function survivalTest() {
   h.sim.receive({ t: 'inventoryOpen', player: me.id });
   h.run(0.1);
   const grid = me.container;
-  check(grid?.kind === 'crafting' && grid.slots.length === 5, `the 2×2 grid's open (${grid?.slots.length} slots)`);
+  check(grid?.kind === 'crafting' && grid.slots.length === 9, `the 2×2 grid's open, with the armour slots (${grid?.slots.length} slots)`);
   h.sim.receive({ t: 'inventoryMove', player: me.id, from: 5, to: 100 });
   h.run(0.1);
   check(grid!.slots[4]?.item === 'oak_planks' && grid!.slots[4]?.count === 4, `a log in it: ${grid!.slots[4]?.count} planks to take`);
@@ -121,13 +121,35 @@ export default function survivalTest() {
     check(g.world.blockName(g.world.getBlock(x, fy, z)) === 'furnace_lit', 'it burns on (lit)');
   }
 
-  // Out of survival, what they carry is put away; back in, it's there.
+  // Armour: put on in the inventory's armour slots (5 to 8 of its grid, head to feet), its points counted.
+  me.inventory.set(7, { item: 'iron_chestplate', count: 1 });
+  me.inventory.set(8, { item: 'diamond_helmet', count: 1 });
+  me.inventory.set(9, { item: 'oak_planks', count: 1 });
+  // (The furnace shut first: their own inventory, Minecraft's survival screen.)
+  h.sim.receive({ t: 'inventoryClose', player: me.id });
+  h.sim.receive({ t: 'inventoryOpen', player: me.id });
+  h.run(0.1);
+  const own = me.container!;
+  h.sim.receive({ t: 'inventoryMove', player: me.id, from: 7, to: 106 });
+  h.sim.receive({ t: 'inventoryMove', player: me.id, from: 9, to: 105 });
+  h.sim.receive({ t: 'inventoryMove', player: me.id, from: 8, to: -1 });
+  h.run(0.1);
+  check(own.slots[6]?.item === 'iron_chestplate' && own.slots[5]?.item === 'diamond_helmet' && me.inventory.count('oak_planks') >= 1, `chestplate on, planks refused by the helmet's slot, a helmet shift-clicked on: ${own.slots.slice(5).map((s) => s?.item ?? '-')}`);
+  check(me.armor === 9, `iron chestplate and diamond helmet: ${me.armor} armour points`);
+  h.sim.receive({ t: 'inventoryClose', player: me.id });
+  h.run(0.1);
+  check(me.armor === 9, 'still worn with the inventory shut');
+  // An iron chestplate crafted: eight ingots in its shape.
+  const I = 'iron_ingot';
+  check(craft([I, null, I, I, I, I, I, I, I], 3, () => true)?.item === 'iron_chestplate', 'an iron chestplate from eight ingots');
+
+  // What they carry is theirs whatever the mode, as Minecraft's is.
   const carried = me.inventory.count('oak_planks');
   g.commands.run('gamemode creative');
   h.run(0.2);
-  check(me.inventory.count('oak_planks') === 0, 'creative: put away');
+  check(me.inventory.count('oak_planks') === carried && me.inventory.capacity === 36, `creative: still carried (${carried} planks)`);
   g.commands.run('gamemode survival');
   h.run(0.2);
-  check(me.inventory.count('oak_planks') === carried && me.inventory.capacity === 36, `survival again: ${carried} planks back`);
+  check(me.inventory.count('oak_planks') === carried && me.armor === 9, `survival again: ${carried} planks, the armour on`);
   console.log(`  stone by hand ${t1.toFixed(2)} s (nothing), wooden pickaxe ${t2.toFixed(2)} s; iron ore needs stone; crafted planks in the 2×2 grid; a furnace smelted raw iron`);
 }

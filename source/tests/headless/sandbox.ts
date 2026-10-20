@@ -11,24 +11,31 @@ export default function sandbox() {
   const me = g.player;
   h.run(2);
 
-  // The hotbar starts empty: an empty hand places nothing. Then grass, from the creative inventory, in the first slot.
+  // In creative, the hotbar starts empty: an empty hand places nothing. Then grass, a whole stack from the creative
+  // inventory, in the first slot (Sandbox plays by items in every mode).
+  g.commands.run('gamemode creative');
+  h.run(0.2);
   const place = () => {
     h.run(0.2, { pilot: () => ({ pitch: -0.5 }) });
     h.step(1 / 60, { pitch: -0.5, buttons: 4, clicked: 4 });
     h.run(0.4);
   };
-  const slots = h.sim.players.find((p) => p.id === me.id)!.creative!.hotbar;
-  check(slots.length === 36 && slots.every((id) => id === 0), 'the hotbar starts empty');
+  const slots = me.inventory.slots;
+  check(slots.length === 36 && slots.every((s) => !s), 'the hotbar starts empty');
   place();
   check(!me.achieved('first_block'), 'nothing placed from an empty hand');
-  h.send({ t: 'creativePick', player: me.id, block: g.world.blockId('grass_block'), slot: 0 });
+  h.send({ t: 'creativeGive', player: me.id, item: 'grass_block', slot: 0 });
   h.step(1 / 60, {});
+  check(me.inventory.slots[0]?.count === 64, `a whole stack of grass (${me.inventory.slots[0]?.count})`);
   place();
-  check(me.achieved('first_block') && !me.achieved('picker'), 'Groundbreaker, for the first block');
-  h.send({ t: 'creativePick', player: me.id, block: g.world.blockId('crate') });
+  check(me.achieved('first_block') && !me.achieved('picker') && me.inventory.slots[0]?.count === 64, 'Groundbreaker, for the first block (creative keeps its stack)');
+  h.send({ t: 'creativeGive', player: me.id, item: 'crate', slot: 0 });
   h.step(1 / 60, { yaw: me.yaw + 1 });
   place();
   check(me.achieved('picker'), 'Fresh from the Picker, for a crate');
+  h.send({ t: 'creativeGive', player: me.id, item: 'diamond_sword', slot: 1 });
+  h.step(1 / 60, {});
+  check(me.inventory.slots[1]?.item === 'diamond_sword' && me.inventory.slots[1]?.count === 1, 'and items: a diamond sword');
 
   // Dropped from high up: a fall, not flying.
   const { x, y, z } = me.position;

@@ -53,6 +53,35 @@ export default function mobsTest() {
   const was = undead();
   h.run(15, { until: () => undead() === 0, pilot: () => ({}) });
   check(was > 0 && undead() < was, `by day the undead burn: ${was} then ${undead()}`);
+  // By day, cows graze round a survivor.
+  h.run(30, { until: () => g.entities.count('cow') > 0 });
+  check(g.entities.count('cow') > 0, `cows graze by day (${g.entities.count('cow')})`);
+
+  // A sword hits a zombie in front for Minecraft's damage (a diamond sword's 7), and wears by one.
+  for (const k of [...KINDS, 'cow']) for (const m of g.entities.all(k)) m.remove();
+  // (Up again and well, on open ground at the spawn, if the night was too much.)
+  if (!me.alive) me.revive();
+  me.heal(20);
+  // (On a stone floor up in the open: no trees in the way.)
+  const sp = g.world.spawn;
+  const [fx, fz, fy] = [Math.floor(sp.x), Math.floor(sp.z), 150];
+  for (let dx = -4; dx <= 4; dx++) for (let dz = -4; dz <= 4; dz++) g.world.setBlock(fx + dx, fy - 1, fz + dz, 'stone');
+  me.teleport({ x: fx + 0.5, y: fy, z: fz + 0.5 });
+  h.run(0.5);
+  me.inventory.set(0, { item: 'diamond_sword', count: 1 });
+  me.inventory.select(0);
+  // (Two blocks ahead along their look, level.)
+  const yaw = me.yaw;
+  h.run(0.2, { pilot: () => ({ yaw, pitch: -0.2 }) });
+  const p = me.position, l = me.look;
+  const d = Math.hypot(l.x, l.z) || 1;
+  const z = g.entities.spawn('zombie', { x: p.x + (l.x / d) * 2, y: p.y, z: p.z + (l.z / d) * 2 });
+  // (In the world from the next step.)
+  h.step(1 / 30, { yaw, pitch: -0.2 });
+  const hp = z.health;
+  h.step(1 / 30, { yaw, pitch: -0.2, buttons: 1, clicked: 1 });
+  h.step(1 / 30, { yaw, pitch: -0.2 });
+  check(hp - z.health >= 7 && me.inventory.slots[0]?.wear === 1, `a diamond sword hit: ${hp - z.health} damage, worn ${me.inventory.slots[0]?.wear} `);
   g.commands.run('gamemode creative');
   console.log(`  none for a creative builder; ${kinds.join(', ')} came for a survivor at night and hurt them; ignored in creative; ${was} undead burnt by day to ${undead()}`);
 }

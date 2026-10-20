@@ -82,6 +82,9 @@ const REDSTONE = listed([
 const NONE = () => -1;
 const IN_NONE = (name: string) => [BUILDING, COLOURED, NATURAL, FUNCTIONAL, REDSTONE].every((r) => r(name) < 0);
 
+/** A picture of nothing (a tab whose own comes later). */
+const BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
 const TABS: Tab[] = [
   // (A block no section claims is a building block: nothing a game has goes missing.)
   { id: 'building', title: 'Building Blocks', icon: ['bricks', 'stone_bricks', 'stone'], rank: (n) => (BUILDING(n) >= 0 ? BUILDING(n) : IN_NONE(n) ? 999 : -1) },
@@ -91,6 +94,11 @@ const TABS: Tab[] = [
   // (Minimal-marm: the tabs for blocks only, each tab's picture a block of the game's own; the search's a magnifying glass.)
   { id: 'redstone', title: 'Redstone Blocks', icon: ['rail', 'stone_button', 'oak_pressure_plate'], rank: REDSTONE },
   { id: 'search', title: 'Search Items', icon: [], rank: () => 0, right: true },
+  // (A game's items, as Minecraft's bottom row has them: tools, weapons and armour, and what things are made from.
+  // Each tab's picture is one of its items, given with `setTabImage`.)
+  { id: 'tools', title: 'Tools & Utilities', icon: [], image: BLANK, rank: NONE, bottom: true },
+  { id: 'combat', title: 'Combat', icon: [], image: BLANK, rank: NONE, bottom: true },
+  { id: 'ingredients', title: 'Ingredients', icon: [], image: BLANK, rank: NONE, bottom: true },
   // (What they carry themselves: Minecraft's own inventory, the hotbar and the twenty-seven slots behind it.)
   { id: 'inventory', title: 'Inventory', icon: ['chest', 'crate'], rank: NONE, bottom: true, right: true },
 ];
@@ -153,6 +161,12 @@ export class McCreative {
       this.setHotbar(this.hotbar, this.selected);
     }
     this.showWorn();
+  }
+
+  /** A tab's picture (an item's: the Tools tab's a pickaxe). */
+  setTabImage(id: string, src: string) {
+    const img = this.tabs.get(id)?.querySelector('img');
+    if (img && img.getAttribute('src') !== src) img.setAttribute('src', src);
   }
 
   setWorn(items: readonly (string | null)[]) {
@@ -856,7 +870,9 @@ export class McCreative {
     this.box = box;
     const shape = box ? `${box.kind}:${box.slots.length}` : '';
     this.root.classList.toggle('has-container', !!box);
-    this.root.classList.toggle('is-tall', !!box && !(box.kind === 'crafting' && box.slots.length <= 5));
+    this.root.classList.toggle('is-tall', !!box && !(box.kind === 'crafting' && box.slots.length <= 9));
+    // (The 2×2 grid with the four armour slots beside it: survival's own inventory.)
+    this.root.classList.toggle('has-armour', !!box && box.kind === 'crafting' && box.slots.length === 9);
     if (shape !== this.boxShape) {
       this.boxShape = shape;
       this.boxCells = [];

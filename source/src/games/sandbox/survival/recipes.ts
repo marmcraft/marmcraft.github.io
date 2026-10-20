@@ -1,3 +1,5 @@
+import { ARMOUR, ARMOUR_SHAPES } from './armor';
+
 /**
  * Crafting (Mineclonia's recipes: `research/mineclonia-spec.md`). A shaped recipe is rows of letters, each letter an
  * item or a group (`#planks`: any planks); it matches wherever it sits in the grid (empty rows and columns round it
@@ -105,6 +107,10 @@ export const RECIPES: Recipe[] = [
 ];
 for (const [kind, shape] of Object.entries(TOOL_SHAPES)) {
   for (const [material, m] of Object.entries(TOOL_MATERIALS)) RECIPES.push({ shape, key: { M: m, S: 'stick' }, out: `${material}_${kind}` });
+}
+// Armour: each piece of each material (Minecraft's shapes).
+for (const [material, m] of Object.entries(ARMOUR)) {
+  for (const [piece, shape] of Object.entries(ARMOUR_SHAPES)) RECIPES.push({ shape, key: { M: m.of }, out: `${material}_${piece}` });
 }
 for (const [small, block] of STORAGE) {
   RECIPES.push({ shape: ['XXX', 'XXX', 'XXX'], key: { X: small }, out: block });

@@ -606,12 +606,16 @@ export class TitleScreen implements HomeScreen {
 
   /** What Play says: the way this page plays, when there are two (`modes`). */
   private playWord = 'Play';
+  /** The other way's button (`modes`). */
+  private switcher: HTMLElement | null = null;
 
   modes(current: 'single' | 'multi', other: () => void) {
     const word = (m: 'single' | 'multi') => (m === 'single' ? 'Singleplayer' : 'Multiplayer');
     this.playWord = word(current);
     if (this.ready) this.label.textContent = this.playWord;
-    const switcher = h('button.home-play.home-mode', { onclick: other }, h('span.home-play-label', {}, word(current === 'single' ? 'multi' : 'single')));
+    // (Once: the title screen is kept when the game starts again, quitting to it, and asked again.)
+    this.switcher?.remove();
+    const switcher = (this.switcher = h('button.home-play.home-mode', { onclick: other }, h('span.home-play-label', {}, word(current === 'single' ? 'multi' : 'single'))));
     // (Singleplayer first, Multiplayer under it, whichever this page plays.)
     if (current === 'single') this.button.after(switcher);
     else this.button.before(switcher);

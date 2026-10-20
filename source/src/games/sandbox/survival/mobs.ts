@@ -13,11 +13,15 @@ import { inNether } from './nether';
  *   survivor; never in the Nether or the End.
  * - Come the day, zombies and skeletons out under the sky burn; anything 96 blocks from everyone goes.
  * - Each drops what Minecraft's do (rotten flesh, bones, string, gunpowder).
+ * - By day, cows graze on the grass round survivors, a few at a time; they drop leather (for leather armour).
  *
  * Their skins are painted here in Minecraft's skin layout (no picture files).
  */
 
 type Kind = 'zombie' | 'skeleton' | 'spider' | 'creeper';
+
+/** Where the cow's skin is (its own layout: head, legs, body side by side). */
+const COW: [number, number] = [0, 64];
 
 const ATLAS = 'survival_mobs';
 /** Where each skin is in the atlas. */
@@ -30,6 +34,8 @@ const NEAR = 24;
 const FAR = 44;
 const GONE = 96;
 const TRY = 1.5;
+/** The most cows round one survivor. */
+const COWS = 6;
 /** How far they notice a survivor. */
 const SIGHT = 32;
 
@@ -45,7 +51,7 @@ const hex = (c: string) => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5),
 
 /** Paint the mobs' skins: each a Minecraft-layout skin, region by region (head, body, arms, legs), speckled. */
 function paintSkins(): { width: number; height: number; pixels: Uint8Array } {
-  const width = 256, height = 64;
+  const width = 256, height = 96;
   const pixels = new Uint8Array(width * height * 4);
   const put = (x: number, y: number, c: string, k = 0, vary = 0.12) => {
     const [r, g, b] = hex(c);
@@ -104,7 +110,33 @@ function paintSkins(): { width: number; height: number; pixels: Uint8Array } {
     rect(ox, oy, 40, 12, 8, 8, '#2e2622', 16);
     for (const [x, y] of [[41, 14], [43, 13], [44, 13], [46, 14], [42, 16], [45, 16]]) put(ox + x, oy + y, '#d81e1e', 0, 0);
   }
+  // Cow: brown hide with white patches, a pale muzzle, horns (head 8×8×6 at 0,0; legs 4×12×4 at 32,0; body 12×10×18 at 64,0).
+  {
+    const [ox, oy] = COW;
+    const hide = (x: number, y: number) => (speck(x >> 2, y >> 2, 17) < 0.3 ? '#e8e4dc' : speck(x, y, 18) < 0.2 ? '#3a2416' : '#4a2e1c');
+    rect(ox, oy, 0, 0, 28, 14, hide, 19);
+    rect(ox, oy, 7, 10, 8, 4, '#c8b8a8', 20);
+    rect(ox, oy, 8, 8, 1, 1, '#0a0a0a');
+    rect(ox, oy, 13, 8, 1, 1, '#0a0a0a');
+    rect(ox, oy, 32, 0, 16, 16, (x, y) => (y >= 13 ? '#2a2a2a' : hide(x, y)), 21);
+    rect(ox, oy, 64, 0, 60, 28, hide, 22);
+  }
   return { width, height, pixels };
+}
+
+/** A cow: a long body on four legs, its head out in front (+z), on the humanoid rig (its legs walk as legs). */
+function cowModel() {
+  const add = (uv: [number, number]): [number, number] => [COW[0] + uv[0], COW[1] + uv[1]];
+  const leg = (name: string, x: number, z: number): ModelPart => ({ name, size: [4, 12, 4], uv: add([32, 0]), pivot: [x, 12, z], offset: [-2, -12, -2] });
+  const parts: ModelPart[] = [
+    { name: 'body', size: [12, 10, 18], uv: add([64, 0]), pivot: [0, 12, 0], offset: [-6, 0, -9] },
+    { name: 'head', size: [8, 8, 6], uv: add([0, 0]), pivot: [0, 18, 9], offset: [-4, -2, 0] },
+    leg('legR', -3, -6),
+    leg('legL', 3, -6),
+    leg('armR', -3, 6),
+    leg('armL', 3, 6),
+  ];
+  return { rig: 'humanoid' as const, parts, atlas: ATLAS, scale: 1 };
 }
 
 /** A creeper: a head on a tall body on four short legs (Minecraft's layout: legs 4×6×4 at the skin's 0,16). */
@@ -250,6 +282,25 @@ export function mobs(game: GameContext, survives: (p: Player) => boolean) {
     }
   };
 
+  // A cow ambles about, now and then turning or stopping; hit, it runs off a while.
+  const cow: Behavior = (self, g, dt) => {
+    const s = self.data as { next?: number; dx?: number; dz?: number; flee?: number; health?: number };
+    if (s.health !== undefined && self.health < s.health) s.flee = 3;
+    s.health = self.health;
+    s.next = (s.next ?? 0) - dt;
+    s.flee = Math.max(0, (s.flee ?? 0) - dt);
+    if (s.next <= 0) {
+      s.next = g.rng.range(2, 6);
+      const a = g.rng.next() * Math.PI * 2;
+      const go = s.flee > 0 || g.rng.chance(0.6);
+      [s.dx, s.dz] = go ? [Math.cos(a), Math.sin(a)] : [0, 0];
+    }
+    if (s.dx || s.dz) self.moveDirection(s.dx!, s.dz!);
+    else self.stop();
+    self.setSpeed(s.flee > 0 ? 2 : 1);
+  };
+  game.entities.define('cow', { name: 'Cow', model: cowModel(), hitbox: { width: 0.9, height: 1.4 }, health: 10, speed: 1.6, ai: cow, drops: [{ item: 'leather', chance: 0.7, count: 1 }, { item: 'leather', chance: 0.35, count: 1 }] });
+
   const humanoid = (k: 'zombie' | 'skeleton') => ({ ...Models.humanoid({ skin: SKIN[k], atlas: ATLAS, build: k === 'skeleton' ? ('thin' as const) : ('normal' as const) }), limbs: 'solid' as const });
   game.entities.define('zombie', { name: 'Zombie', model: humanoid('zombie'), hitbox: { width: 0.6, height: 1.95 }, health: 20, speed: 2.3, ai: zombie, drops: [{ item: 'rotten_flesh', chance: 0.8, count: 1 }, { item: 'iron_ingot', chance: 0.025 }] });
   game.entities.define('skeleton', { name: 'Skeleton', model: humanoid('skeleton'), hitbox: { width: 0.6, height: 1.99 }, health: 20, speed: 2.5, ai: skeleton, drops: [{ item: 'bone', chance: 0.8, count: 1 }] });
@@ -265,7 +316,7 @@ export function mobs(game: GameContext, survives: (p: Player) => boolean) {
 
   // -------------------------------------------------------------------------------------------- night and day
   const night = () => game.env.time < 0.23 || game.env.time > 0.77;
-  const mine = () => KINDS.flatMap((k) => game.entities.all(k));
+  const mine = () => [...KINDS, 'cow'].flatMap((k) => game.entities.all(k));
   /** Out under the sky (nothing over it but air): the sun reaches it. */
   const open = (at: { x: number; y: number; z: number }) => game.world.surfaceY(Math.floor(at.x), Math.floor(at.z)) < at.y + 1;
 
@@ -287,8 +338,23 @@ export function mobs(game: GameContext, survives: (p: Player) => boolean) {
     }
     // After dark, more come out round each survivor.
     tryIn -= dt;
-    if (tryIn > 0 || !night()) return;
+    if (tryIn > 0) return;
     tryIn = TRY;
+    // By day, cows graze on grass round survivors (a few each).
+    if (!night()) {
+      for (const p of survivors) {
+        const round = game.entities.all('cow').filter((m) => Math.hypot(p.position.x - m.position.x, p.position.z - m.position.z) < FAR + 8).length;
+        if (round >= COWS || !game.rng.chance(0.3)) continue;
+        const a = game.rng.next() * Math.PI * 2;
+        const r = NEAR + game.rng.next() * (FAR - NEAR);
+        const x = Math.floor(p.position.x + Math.cos(a) * r);
+        const z = Math.floor(p.position.z + Math.sin(a) * r);
+        const y = game.world.surfaceY(x, z);
+        if (y < 1 || game.world.blockName(game.world.getBlock(x, y, z)) !== 'grass_block') continue;
+        for (let k = 0; k < 2; k++) game.entities.spawn('cow', { x: x + 0.5 + k, y: y + 1, z: z + 0.5 }, { yaw: game.rng.next() * Math.PI * 2 });
+      }
+      return;
+    }
     for (const p of survivors) {
       const round = all.filter((m) => Math.hypot(p.position.x - m.position.x, p.position.z - m.position.z) < FAR + 8).length;
       if (round >= CAP) continue;

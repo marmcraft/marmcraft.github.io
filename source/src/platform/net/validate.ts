@@ -160,6 +160,11 @@ function sanitizeMessage(raw: unknown): ClientMessage | null {
     const count = raw.count === undefined ? undefined : int(raw.count, 1, 9999);
     return from === null || to === null || count === null ? null : { t: 'inventoryMove', player: '', from, to, count };
   }
+  if (raw.t === 'creativeGive') {
+    const slot = int(raw.slot, 0, 255);
+    const item = raw.item === null ? null : typeof raw.item === 'string' && /^[\w:.-]{1,64}$/.test(raw.item) ? raw.item : undefined;
+    return slot === null || item === undefined ? null : { t: 'creativeGive', player: '', item, slot };
+  }
   if (raw.t === 'inventoryToss') {
     const from = int(raw.from, 0, 355);
     const count = raw.count === undefined ? undefined : int(raw.count, 1, 9999);

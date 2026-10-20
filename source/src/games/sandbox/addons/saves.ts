@@ -1,4 +1,5 @@
 import type { GameContext, ItemStack } from '@platform';
+import type { Survival } from '../survival';
 import type { GameMode, GameModes } from './gamemode';
 
 /**
@@ -15,10 +16,12 @@ const WINDOW = 15;
 export interface Saved {
   mode: GameMode;
   slots: (ItemStack | null)[];
+  /** Armour worn, head to feet. */
+  worn?: (ItemStack | null)[];
   at: { x: number; y: number; z: number; yaw: number };
 }
 
-export function saves(game: GameContext, modes: GameModes) {
+export function saves(game: GameContext, modes: GameModes, rules: Survival) {
   const joined = new Map<string, number>();
   const restored = new Set<string>();
 
@@ -42,7 +45,8 @@ export function saves(game: GameContext, modes: GameModes) {
     const s = data as Partial<Saved> | null;
     if (!s || typeof s !== 'object') return;
     if (s.mode && ['creative', 'survival', 'adventure', 'spectator'].includes(s.mode)) modes.set(player, s.mode);
-    if (Array.isArray(s.slots) && modes.of(player) !== 'creative' && modes.of(player) !== 'spectator') {
+    if (Array.isArray(s.worn)) rules.setWorn(player, s.worn.slice(0, 4).map((st) => (st && typeof st.item === 'string' && finite(st.count) ? { item: st.item, count: 1, ...(finite(st.wear) && { wear: Math.floor(st.wear!) }) } : null)));
+    if (Array.isArray(s.slots)) {
       s.slots.slice(0, player.inventory.capacity).forEach((st, i) => {
         if (!st || typeof st.item !== 'string' || !game.items.get(st.item) || !finite(st.count) || st.count < 1) return;
         player.inventory.set(i, { item: st.item, count: Math.min(Math.floor(st.count), 64), ...(finite(st.wear) && st.wear! > 0 && { wear: Math.floor(st.wear!) }) });
@@ -70,7 +74,7 @@ export function saves(game: GameContext, modes: GameModes) {
         // (Not until they've been put back as they were, so a fresh start doesn't overwrite what was kept.)
         if (!restored.has(p.id) && game.clock.total - (joined.get(p.id) ?? 0) < WINDOW) continue;
         const pos = p.position;
-        const saved: Saved = { mode: modes.of(p), slots: p.inventory.slots.map((s) => (s ? { item: s.item, count: s.count, ...(s.wear && { wear: s.wear }) } : null)), at: { x: pos.x, y: pos.y, z: pos.z, yaw: p.yaw } };
+        const saved: Saved = { mode: modes.of(p), slots: p.inventory.slots.map((s) => (s ? { item: s.item, count: s.count, ...(s.wear && { wear: s.wear }) } : null)), worn: rules.worn(p), at: { x: pos.x, y: pos.y, z: pos.z, yaw: p.yaw } };
         game.clients.send(p, 'marm:save', saved);
       }
     },

@@ -22,6 +22,8 @@ export interface BuildingOptions {
   ring?: boolean;
   /** Which players build this way (a game where some build otherwise, in creative, says). Default: everyone. */
   who?(player: Player): boolean;
+  /** A player who keeps what they place (a builder in creative): the block placed isn't taken from them. Default: nobody. */
+  keeps?(player: Player): boolean;
 }
 
 export interface Building {
@@ -136,7 +138,7 @@ export function building(game: GameContext, opts: BuildingOptions = {}): Buildin
       const y = into ? hit.y : hit.y + hit.normal.y;
       const z = into ? hit.z : hit.z + hit.normal.z;
       if (canPlace({ x, y, z }, places, player) && world.placeBlock(x, y, z, places, { by: player, against: hit })) {
-        player.inventory.take(held.item, 1);
+        if (!opts.keeps?.(player)) player.inventory.take(held.item, 1);
         swing(player);
       }
     }

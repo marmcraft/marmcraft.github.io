@@ -1,6 +1,7 @@
 import type { GameContext } from '@platform';
 import { ITEM_ART, paintItems } from './art.shared';
 import { ATLAS, NO_ITEM } from './looks.shared';
+import { armourOf, defineArmour } from './armor';
 import type { ToolStats, ToolType } from './blocks';
 
 /**
@@ -27,6 +28,18 @@ export function toolStats(item: string | undefined | null): ToolStats | null {
   if (!material || !TOOL_KINDS.includes(type)) return null;
   return { type, level: material.level, speed: material.speed };
 }
+
+/**
+ * How each tool hits (Minecraft's attack damage and attacks a second: https://minecraft.wiki/w/Damage), by kind and
+ * material (wooden, stone, iron, golden, diamond). A sword sweeps those beside what it hits.
+ */
+const HITS: Record<ToolType, { damage: number[]; speed: number[] }> = {
+  sword: { damage: [4, 5, 6, 4, 7], speed: [1.6, 1.6, 1.6, 1.6, 1.6] },
+  axe: { damage: [7, 9, 9, 7, 9], speed: [0.8, 0.8, 0.9, 1, 1] },
+  pickaxe: { damage: [2, 3, 4, 2, 5], speed: [1.2, 1.2, 1.2, 1.2, 1.2] },
+  shovel: { damage: [2.5, 3.5, 4.5, 2.5, 5.5], speed: [1, 1, 1, 1, 1] },
+  hoe: { damage: [1, 1, 1, 1, 1], speed: [1, 2, 3, 1, 4] },
+};
 
 /** Flint and steel's uses (Minecraft's 65 lights). */
 export const FLINT_USES = 65;
@@ -57,6 +70,7 @@ const MATERIAL_NAMES: Record<string, string> = {
   snowball: 'Snowball',
   brick: 'Brick',
   apple: 'Apple',
+  leather: 'Leather',
   quartz: 'Nether Quartz',
   nether_brick: 'Nether Brick',
   eye_of_ender: 'Eye of Ender',
@@ -79,14 +93,19 @@ const SINGLES = new Set(['water_bucket', 'lava_bucket']);
 export function defineItems(game: GameContext): Set<string> {
   const painted = paintItems();
   game.items.atlas(ATLAS, { width: painted.width, height: painted.height, pixels: painted.pixels });
+  defineArmour(game);
   for (const name of Object.keys(ITEM_ART)) {
-    if (game.items.get(name)) continue;
+    if (game.items.get(name) || armourOf(name)) continue;
     const tool = toolStats(name);
     if (name === 'flint_and_steel') {
       game.items.define(name, { kind: 'tool', name: 'Flint and Steel', stack: 1, uses: FLINT_USES });
     } else if (tool) {
-      const m = MATERIALS[name.slice(0, name.lastIndexOf('_'))];
-      game.items.define(name, { kind: 'tool', name: `${m.label} ${tool.type.charAt(0).toUpperCase()}${tool.type.slice(1)}`, stack: 1, uses: m.uses });
+      const material = name.slice(0, name.lastIndexOf('_'));
+      const m = MATERIALS[material];
+      // (A tool's a weapon too: the melee kit swings it.)
+      const k = Object.keys(MATERIALS).indexOf(material);
+      const hit = HITS[tool.type];
+      game.items.define(name, { kind: 'melee', name: `${m.label} ${tool.type.charAt(0).toUpperCase()}${tool.type.slice(1)}`, stack: 1, uses: m.uses, damage: hit.damage[k], cooldown: Math.round((1 / hit.speed[k]) * 100) / 100, knockback: tool.type === 'sword' ? 1 : 0.8, ...(tool.type === 'sword' && { sweep: true }) });
     } else {
       game.items.define(name, { kind: 'material', name: MATERIAL_NAMES[name] ?? name, ...(SIXTEENS.has(name) && { stack: 16 }), ...(SINGLES.has(name) && { stack: 1 }) });
     }

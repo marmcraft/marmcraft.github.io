@@ -25,7 +25,7 @@ export const ADDONS: ((game: GameContext) => void | { update(dt: number): void }
     const modes = gamemode(game, (player, mode, was) => rules?.changed(player, mode, was));
     rules = survival(game, (player) => modes.of(player));
     // What each player has, kept in their own browser and put back when they return.
-    const kept = saves(game, modes);
+    const kept = saves(game, modes, rules);
     return { update: (dt: number) => (rules!.update(dt), kept.update(dt)) };
   },
 ];

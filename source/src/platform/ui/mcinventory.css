@@ -229,3 +229,21 @@
 .mcinv.is-page-own .mcinv-track { top: calc(52 * var(--g)); height: calc(56 * var(--g)); }
 .mcinv.is-survival.is-page-own.has-around .mcinv-left, .mcinv.is-survival.is-page-own.has-around .mcinv-right { display: block; }
 .mcinv.is-survival.is-page-own.has-around { background: none; }
+
+/* Survival's own inventory, Minecraft's (176 × 166 in its texture's pixels): the four armour slots down the left (head
+   to feet), the figure beside them, the 2×2 crafting grid and its result on the right with "Crafting" over it, then
+   the twenty-seven slots and the hotbar under them. */
+.mcinv.has-armour .mcinv-panel { height: calc(166 * var(--g)); }
+.mcinv.has-armour .mcinv-own { top: calc(82 * var(--g)) !important; }
+.mcinv.has-armour .mcinv-hotbar { top: calc(140 * var(--g)); }
+.mcinv.has-container.has-armour .mcinv-doll { left: calc(25 * var(--g)); top: calc(7 * var(--g)); width: calc(51 * var(--g)); height: calc(72 * var(--g)); }
+.mcinv.has-armour .mcinv-container-title { left: calc(97 * var(--g)); top: calc(6 * var(--g)); }
+.mcinv-container.is-crafting.has-9 .at-0 { left: calc(97 * var(--g)); top: calc(17 * var(--g)); }
+.mcinv-container.is-crafting.has-9 .at-1 { left: calc(115 * var(--g)); top: calc(17 * var(--g)); }
+.mcinv-container.is-crafting.has-9 .at-2 { left: calc(97 * var(--g)); top: calc(35 * var(--g)); }
+.mcinv-container.is-crafting.has-9 .at-3 { left: calc(115 * var(--g)); top: calc(35 * var(--g)); }
+.mcinv-container.is-crafting.has-9 .at-4 { left: calc(153 * var(--g)); top: calc(27 * var(--g)); }
+.mcinv-container.is-crafting.has-9 .at-5 { left: calc(7 * var(--g)); top: calc(7 * var(--g)); }
+.mcinv-container.is-crafting.has-9 .at-6 { left: calc(7 * var(--g)); top: calc(25 * var(--g)); }
+.mcinv-container.is-crafting.has-9 .at-7 { left: calc(7 * var(--g)); top: calc(43 * var(--g)); }
+.mcinv-container.is-crafting.has-9 .at-8 { left: calc(7 * var(--g)); top: calc(61 * var(--g)); }

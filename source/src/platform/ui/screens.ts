@@ -52,6 +52,13 @@ export class Inventory {
   set onToss(fn: McCreative['onToss']) {
     if (this.mc) this.mc.onToss = fn;
   }
+  /** The game's items, each with a number (past the blocks' ids), in the creative inventory's tabs. */
+  setItems(items: Parameters<McCreative['setItems']>[0]) {
+    this.mc?.setItems(items);
+  }
+  setTabImage(id: string, src: string) {
+    this.mc?.setTabImage(id, src);
+  }
   /** It shows a survivor's own inventory (Minecraft's look). */
   get survives(): boolean {
     return !!this.mc;

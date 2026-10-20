@@ -130,6 +130,26 @@ const CAMERA_MARGIN = 0.3;
 /** The class a page in Mineclonia's look has while in play (`hud.style`): `ui/mineclonia.css` styles under it. */
 const MINECLONIA_STYLE = 'mineclonia-look';
 
+/**
+ * Where an item comes in the creative inventory, as Minecraft lists them: swords then armour (leather to diamond, head
+ * to feet); each tier's shovel, pickaxe, axe and hoe, then the other tools; ingredients in Minecraft's order.
+ */
+const TIERS = ['wooden', 'leather', 'stone', 'iron', 'golden', 'diamond'];
+const PIECES = ['shovel', 'pickaxe', 'axe', 'hoe', 'sword', 'helmet', 'chestplate', 'leggings', 'boots'];
+const INGREDIENTS = ['coal', 'charcoal', 'raw_iron', 'raw_copper', 'raw_gold', 'emerald', 'lapis_lazuli', 'diamond', 'quartz', 'iron_nugget', 'gold_nugget', 'iron_ingot', 'copper_ingot', 'gold_ingot', 'stick', 'flint', 'leather', 'brick', 'nether_brick', 'clay_ball', 'snowball', 'glowstone_dust', 'redstone', 'string', 'gunpowder', 'bone', 'rotten_flesh', 'apple'];
+const OTHER_TOOLS = ['flint_and_steel', 'bucket', 'water_bucket', 'lava_bucket', 'eye_of_ender'];
+function creativeOrder(id: string): number {
+  const k = id.lastIndexOf('_');
+  const tier = TIERS.indexOf(id.slice(0, k));
+  const piece = PIECES.indexOf(id.slice(k + 1));
+  if (tier >= 0 && piece === 4) return tier;
+  if (tier >= 0 && piece >= 5) return 100 + tier * 10 + piece;
+  if (tier >= 0 && piece >= 0) return tier * 10 + piece;
+  if (OTHER_TOOLS.includes(id)) return 500 + OTHER_TOOLS.indexOf(id);
+  if (INGREDIENTS.includes(id)) return 1000 + INGREDIENTS.indexOf(id);
+  return 5000;
+}
+
 export class Runtime {
   mode: Mode = 'title';
   private settings: Settings;
@@ -173,6 +193,10 @@ export class Runtime {
   private title: HomeScreen;
   private pause!: PauseMenu;
   private picker: BlockPicker | null = null;
+  /** The pictures the block picker shows, by number (blocks', and in a game by items, its items' too). */
+  private pickerIcons = new Map<number, string>();
+  /** A game playing by items (`player.hotbar: 'items'`), creative too: its items numbered for the creative inventory. */
+  private numbered = { count: -1, number: new Map<string, number>(), item: new Map<number, string>() };
   private hooks!: FrameHooks;
   /** The first-person layer (`client.view`): what's in hand and the player's arms, placed by the game's kits. */
   private held!: FirstPersonLayer;
@@ -571,7 +595,7 @@ export class Runtime {
     this.renderer.opaqueScene.add(this.particles.points);
     this.debris = new Debris({ world, registry: this.registry, textures: this.textures, particles: this.particles, scene: this.renderer.opaqueScene, sunDir: this.renderer.uniforms.uSunDir });
 
-    const icons = new Map<number, string>();
+    const icons = (this.pickerIcons = new Map<number, string>());
     for (const b of this.registry.blocks) {
       if (b.id === 0) continue;
       // A bed's icon shows it whole: the head too.
@@ -753,6 +777,14 @@ export class Runtime {
         if (what.slot !== undefined) this.link.send({ t: 'message', msg: { t: 'inventoryToss', player: this.playerId ?? '', from: what.slot } });
       };
       this.picker.onPick = (id, slot, fromSlot) => {
+        // (A game by items: a whole stack of what's picked, moved, or taken away; the server keeps what they carry.)
+        if (this.byItems) {
+          const me = this.frameData?.players.find((p) => p.id === this.playerId);
+          const to = slot ?? me?.hotbar?.selected ?? 0;
+          if (fromSlot !== undefined) this.link.send({ t: 'message', msg: { t: 'inventoryMove', player: this.playerId ?? '', from: fromSlot, to } });
+          else this.link.send({ t: 'message', msg: { t: 'creativeGive', player: this.playerId ?? '', item: id ? (this.numbered.item.get(id) ?? null) : null, slot: to } });
+          return;
+        }
         this.link.send({ t: 'message', msg: { t: 'creativePick', player: this.playerId ?? '', block: id, slot, fromSlot } });
         if (id) this.hud.showToast(this.registry.blocks[id]?.label ?? '');
       };
@@ -1495,6 +1527,46 @@ export class Runtime {
   // ---------------------------------------------------------------------------------------------
 
   /** The icon an item shows: its sprite, its block, or a picture of its model (as this screen has it: its look over the server's). */
+  /** This game plays by items whatever the mode (`player.hotbar: 'items'`). */
+  private get byItems(): boolean {
+    return !!this.def.player?.build && this.def.player.hotbar === 'items';
+  }
+
+  /**
+   * Its items numbered for the creative inventory, as the server has defined them so far: a block's item by the
+   * block's own id (it's shown in the blocks' tabs), every other item from 70,000 (past any block's), in its tab:
+   * Tools & Utilities, Combat, or Ingredients.
+   */
+  private numberItems() {
+    const defs = [...this.content.items.entries()];
+    if (defs.length === this.numbered.count || !this.picker) return;
+    this.numbered.count = defs.length;
+    const items: { id: number; item: string; label: string; tab: string; wear?: 'helmet' | 'chestplate' | 'leggings' | 'boots' }[] = [];
+    let next = 70000;
+    const tabImage = new Map<string, string>();
+    for (const [id, d] of defs.sort((a, b) => a[0].localeCompare(b[0]))) {
+      const block = typeof d.icon === 'object' && d.icon && 'block' in d.icon ? this.registry.byName.get(d.icon.block) : undefined;
+      if (block) {
+        this.numbered.number.set(id, block.id);
+        this.numbered.item.set(block.id, id);
+        continue;
+      }
+      const n = this.numbered.number.get(id) ?? next++;
+      next = Math.max(next, n + 1);
+      this.numbered.number.set(id, n);
+      this.numbered.item.set(n, id);
+      const icon = this.itemIcon(d, 48);
+      this.pickerIcons.set(n, icon);
+      const tab = /_(sword|helmet|chestplate|leggings|boots)$/.test(id) ? 'combat' : /(_pickaxe|_axe|_shovel|_hoe|bucket|flint_and_steel|eye_of_ender)$/.test(id) ? 'tools' : 'ingredients';
+      items.push({ id: n, item: id, label: d.name, tab });
+      if (!tabImage.has(tab) || id === 'iron_pickaxe' || id === 'golden_sword' || id === 'iron_ingot') tabImage.set(tab, icon);
+    }
+    // (In Minecraft's order: by tier, then piece.)
+    items.sort((a, b) => creativeOrder(a.item) - creativeOrder(b.item) || a.item.localeCompare(b.item));
+    this.picker.setItems(items);
+    for (const [tab, src] of tabImage) this.picker.setTabImage(tab, src);
+  }
+
   private itemIcon(d: ItemDefinition, size: number): string {
     return this.iconOf(d.icon ?? PLACEHOLDER_ICON, size);
   }
@@ -1544,8 +1616,10 @@ export class Runtime {
     }
     const creative = me.creative;
     // A builder in creative builds with their blocks; out of it (survival) they play by items: their hotbar's the item one.
-    if (this.def.player?.build && this.walker && !creative !== this.itemMode) {
-      this.itemMode = !creative;
+    // (A game by items plays by them in creative too.)
+    const byItems = !creative || this.byItems;
+    if (this.def.player?.build && this.walker && byItems !== this.itemMode) {
+      this.itemMode = byItems;
       this.shown.creative = this.shown.hotbar = this.shown.held = '';
       this.held.holdNothing();
       if (this.mode === 'picker') this.closePicker();
@@ -1563,8 +1637,12 @@ export class Runtime {
       this.shown.health = health;
       this.gameHud.setHealth(me.health, hearts);
     }
-    if (creative) this.picker?.setHotbar(creative.hotbar, creative.selected);
-    if (creative && hud) {
+    // In creative, a game by items: the creative inventory's hotbar and slots are what they carry, numbered.
+    if (creative && this.byItems && me.hotbar) {
+      this.numberItems();
+      this.picker?.setHotbar(me.hotbar.slots.map((s) => (s ? (this.numbered.number.get(s.item) ?? 0) : 0)), me.hotbar.selected);
+    } else if (creative) this.picker?.setHotbar(creative.hotbar, creative.selected);
+    if (creative && hud && !this.byItems) {
       const key = `${creative.hotbar.join(',')}|${creative.selected}`;
       if (key !== this.shown.creative) {
         const announce = this.shown.creative !== '' && !this.shown.creative.endsWith(`|${creative.selected}`);
